@@ -130,18 +130,19 @@ class wxPseudocodeItem
         std::vector<wxPseudocodeItem*> ordered_childs;
 };
 
-class wxPseudocode : public wxDataViewCtrl
+class wxPseudocode : public wxDataViewModel
 {
     public:
         wxPseudocode(){};
         wxPseudocode(std::vector<GUILoop> top_level_loops);
 
-        bool IsContainer(wxDataViewItem &item);
-        wxDataViewItem GetParent(wxDataViewItem &item);
-        unsigned int GetChildren(wxDataViewItem& item, wxDataViewItemArray& childs);
-        unsigned int GetColumnCount();
-        wxString GetColumnType(unsigned int col);
-        void GetValue(wxVariant &var, wxDataViewItem& item, unsigned int col);
+        bool IsContainer(const wxDataViewItem &item) const;
+        virtual wxDataViewItem GetParent(const wxDataViewItem &item) const;
+        unsigned int GetChildren(const wxDataViewItem& item, wxDataViewItemArray& childs) const;
+        unsigned int GetColumnCount() const;
+        wxString GetColumnType(unsigned int col) const;
+        void GetValue(wxVariant &var, const wxDataViewItem& item, unsigned int col) const;
+        bool SetValue(const wxVariant& var, const wxDataViewItem& item, unsigned int col);
     private:
         std::vector<wxPseudocodeItem*> roots;
         std::vector<wxPseudocodeItem> items;

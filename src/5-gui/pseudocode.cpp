@@ -156,19 +156,19 @@ void wxPseudocode::parseChilds(wxPseudocodeItem* parent, GUILoop& loop)
     }
 }
 
-bool IsContainer(wxDataViewItem &item)
+bool wxPseudocode::IsContainer(const wxDataViewItem &item) const
 {
     return static_cast<wxPseudocodeItem*>(item.GetID())->IsContainer();
 }
 
-wxDataViewItem wxPseudocode::GetParent(wxDataViewItem &item)
+wxDataViewItem wxPseudocode::GetParent(const wxDataViewItem &item) const
 {
     return wxDataViewItem((void*)static_cast<wxPseudocodeItem*>
             (item.GetID())->GetParent());
 }
 
-unsigned int wxPseudocode::GetChildren(wxDataViewItem& item, 
-        wxDataViewItemArray& childs)
+unsigned int wxPseudocode::GetChildren(const wxDataViewItem& item, 
+        wxDataViewItemArray& childs) const
 {
     wxPseudocodeItem* parent = static_cast<wxPseudocodeItem*>(item.GetID());
     for (auto it : parent->GetChildren())
@@ -176,17 +176,18 @@ unsigned int wxPseudocode::GetChildren(wxDataViewItem& item,
     return parent->GetChildren().size();
 }
 
-unsigned int wxPseudocode::GetColumnCount()
+unsigned int wxPseudocode::GetColumnCount() const
 {
     return this->coltypes.size();
 }
 
-wxString wxPseudocode::GetColumnType(unsigned int col)
+wxString wxPseudocode::GetColumnType(unsigned int col) const
 {
     return this->coltypes[col];
 }
 
-void wxPseudocode::GetValue(wxVariant &var, wxDataViewItem& item, unsigned int col)
+void wxPseudocode::GetValue(wxVariant &var, const wxDataViewItem& item, 
+        unsigned int col) const
 {
     wxPseudocodeItem* pitem = static_cast<wxPseudocodeItem*>(item.GetID());
     switch(col)
@@ -205,6 +206,12 @@ void wxPseudocode::GetValue(wxVariant &var, wxDataViewItem& item, unsigned int c
             break;
     }
     assert(false);
+}
+
+
+bool wxPseudocode::SetValue(const wxVariant& var, const wxDataViewItem& item, unsigned int col)
+{
+    return true;
 }
 
 void Pseudocode::actual_run(TopLevelLoopVector* input)

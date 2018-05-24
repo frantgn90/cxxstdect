@@ -20,6 +20,7 @@
 ////@begin includes
 #include "wx/frame.h"
 #include "wx/splitter.h"
+#include "wx/dataview.h"
 ////@end includes
 
 /*!
@@ -89,7 +90,14 @@ public:
     static bool ShowToolTips();
 
 ////@begin Structuredetection member variables
+    wxDataViewCtrl* itemControl3;
 ////@end Structuredetection member variables
+//
+//
+    void SetAssociateModel(wxDataViewModel* model)
+    {
+        this->itemControl3->AssociateModel(model);
+    }
 };
 
 #endif

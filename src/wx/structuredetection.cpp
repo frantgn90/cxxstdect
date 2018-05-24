@@ -21,7 +21,7 @@
 #endif
 
 ////@begin includes
-#include "../../../../Repositories/wxWidgets/include/wx/dataview.h"
+#include "wx/dataview.h"
 ////@end includes
 
 #include "structuredetection.h"
@@ -121,7 +121,7 @@ void Structuredetection::CreateControls()
     itemSplitterWindow2->SetMinimumPaneSize(0);
     itemSplitterWindow2->SetSashGravity(1);
 
-    wxDataViewCtrl* itemControl3 = new wxDataViewCtrl( itemSplitterWindow2,ID_TREECTRL,wxDefaultPosition,wxDefaultSize,0 );
+    itemControl3 = new wxDataViewCtrl( itemSplitterWindow2,ID_TREECTRL,wxDefaultPosition,wxDefaultSize,0 );
     itemControl3->SetName(wxT("code_structure"));
     itemControl3->SetBackgroundColour(wxColour(255, 255, 255));
 

@@ -11,6 +11,7 @@
 #include<mlpack/methods/dbscan/dbscan.hpp>
 #include<reducer.h>
 #include<vector>
+#include<set>
 
 class Loop
 {

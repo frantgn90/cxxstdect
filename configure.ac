@@ -20,6 +20,7 @@ AC_CONFIG_FILES([
                  src/3-loops-id/Makefile
                  src/4-loops-merge/Makefile
                  src/5-gui/Makefile
+                 src/wx/Makefile
                  src/model/Makefile])
 
 AC_CONFIG_MACRO_DIR([m4])

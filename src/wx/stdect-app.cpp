@@ -9,6 +9,28 @@
 // Licence:     
 /////////////////////////////////////////////////////////////////////////////
 
+////@begin includes
+
+#include<string>
+#include<iostream>
+
+// Some utils
+//
+#include <UIParaverTraceConfig.h>
+#include <TraceHeader.h>
+
+// Include workflow phases
+#include <pipeline.h>
+#include <nptrace.h>
+#include <reducer.h>
+#include <loops_identification.h>
+#include <loops_merge.h>
+#include <pseudocode.h>
+
+
+////@end includes
+
+
 // For compilers that support precompilation, includes "wx/wx.h".
 #include "wx/wxprec.h"
 
@@ -20,14 +42,7 @@
 #include "wx/wx.h"
 #endif
 
-////@begin includes
-////@end includes
-
 #include "stdect-app.h"
-
-////@begin XPM images
-////@end XPM images
-
 
 /*
  * Application instance implementation
@@ -87,6 +102,9 @@ bool StdectApp::OnInit()
 	// Remove the comment markers above and below this block
 	// to make permanent changes to the code.
 
+    if (!wxApp::OnInit())
+        return false;
+
 #if wxUSE_XPM
 	wxImage::AddHandler(new wxXPMHandler);
 #endif
@@ -103,9 +121,81 @@ bool StdectApp::OnInit()
 	mainWindow->Show(true);
 ////@end StdectApp initialisation
 
+    std::string paraver_pcf;
+    size_t start_pos = this->tracefile.find(".prv");
+    if (start_pos != std::string::npos)
+    {
+        paraver_pcf = this->tracefile.substr(0, start_pos);
+        paraver_pcf += ".pcf";
+    }
+    else
+    {
+        std::cout << "Incorrect tracefile: " << this->tracefile << std::endl;
+        exit(-1);
+    }
+    
+    libparaver::UIParaverTraceConfig trace_semantic;
+    trace_semantic.parse(paraver_pcf);
+
+    TraceHeader trace_info(tracefile);
+
+    // Declare all phases
+    NPTrace parser;
+    Reducer reducer(trace_info.texe, filter_lbound);
+    LoopsIdentification loops_id(eps, minPts);
+    LoopsMerge loops_merge(eps_tl, minPts_tl);
+    Pseudocode pseudocode(&trace_semantic);
+
+    // Connect them
+    parser.connect(&reducer);
+    reducer.connect(&loops_id);
+    loops_id.connect(&loops_merge);
+    loops_merge.connect(&pseudocode);
+
+    // Just run the first stage
+    parser.setInput(&tracefile);
+    parser.run();
+
+    mainWindow->SetAssociateModel(
+            static_cast<wxDataViewModel*>(pseudocode.getResult()));
+
     return true;
 }
 
+
+void StdectApp::OnInitCmdLine(wxCmdLineParser& parser)
+{
+    std::cout << "OLEOLE" << std::endl;
+    wxApp::OnInitCmdLine(parser);
+    parser.SetDesc (g_cmdLineDesc);
+    // must refuse '/' as parameter starter or cannot use "/path" style paths
+    //parser.SetSwitchChars (wxT("-"));
+}
+ 
+bool StdectApp::OnCmdLineParsed(wxCmdLineParser& parser)
+{
+    std::cout << "OLEOLE" << std::endl;
+    wxApp::OnCmdLineParsed(parser);
+    for (wxCmdLineArgs::const_iterator it=parser.GetArguments().begin();
+                                   it!=parser.GetArguments().end();
+                                   ++it)
+    {
+        if (it->GetShortName().IsSameAs("t"))
+            this->tracefile = it->GetStrVal();
+        else if (it->GetShortName().IsSameAs("b"))
+            this->filter_lbound = it->GetLongVal();
+        else if (it->GetShortName().IsSameAs("eps"))
+            this->eps = it->GetLongVal();
+        else if (it->GetShortName().IsSameAs("minPts"))
+            this->minPts = it->GetLongVal();
+        else if (it->GetShortName().IsSameAs("eps-tl"))
+            this->eps_tl = it->GetLongVal();
+        else if (it->GetShortName().IsSameAs("minPts-tl"))
+            this->minPts_tl = it->GetLongVal();
+    }
+ 
+    return true;
+}
 
 /*
  * Cleanup for StdectApp
