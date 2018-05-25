@@ -20,7 +20,6 @@
 ////@begin includes
 #include "wx/frame.h"
 #include "wx/splitter.h"
-#include "wx/dataview.h"
 ////@end includes
 
 /*!
@@ -28,6 +27,7 @@
  */
 
 ////@begin forward declarations
+class wxDataViewCtrl;
 ////@end forward declarations
 
 /*!
@@ -75,6 +75,9 @@ public:
 
 ////@begin Structuredetection event handler declarations
 
+    /// wxEVT_UPDATE_UI event handler for ID_TREECTRL
+    void OnTreectrlUpdate( wxUpdateUIEvent& event );
+
 ////@end Structuredetection event handler declarations
 
 ////@begin Structuredetection member function declarations
@@ -90,13 +93,21 @@ public:
     static bool ShowToolTips();
 
 ////@begin Structuredetection member variables
-    wxDataViewCtrl* itemControl3;
+    wxDataViewCtrl* dataviewtree_pseudocode;
 ////@end Structuredetection member variables
 //
 //
+    wxDataViewCtrl* itemControl3;
     void SetAssociateModel(wxDataViewModel* model)
     {
-        this->itemControl3->AssociateModel(model);
+        dataviewtree_pseudocode->AssociateModel(model);
+        wxDataViewTextRenderer *tr =
+            new wxDataViewTextRenderer( "string", wxDATAVIEW_CELL_INERT );
+        wxDataViewColumn *column0 =
+            new wxDataViewColumn( "Pseudocode", tr, 0, 200, wxALIGN_LEFT,
+                    wxDATAVIEW_COL_RESIZABLE );
+        dataviewtree_pseudocode->AppendColumn( column0 );
+
     }
 };
 

@@ -134,6 +134,8 @@ bool StdectApp::OnInit()
         exit(-1);
     }
     
+    std::cout << "Tracefile: " << this->tracefile << std::endl;
+    std::cout << "Semantic file: " << paraver_pcf << std::endl;
     libparaver::UIParaverTraceConfig trace_semantic;
     trace_semantic.parse(paraver_pcf);
 
@@ -156,8 +158,8 @@ bool StdectApp::OnInit()
     parser.setInput(&tracefile);
     parser.run();
 
-    mainWindow->SetAssociateModel(
-            static_cast<wxDataViewModel*>(pseudocode.getResult()));
+    wxDataViewModel* model = (wxDataViewModel*)pseudocode.getResult();
+    mainWindow->SetAssociateModel(model);
 
     return true;
 }
@@ -165,16 +167,14 @@ bool StdectApp::OnInit()
 
 void StdectApp::OnInitCmdLine(wxCmdLineParser& parser)
 {
-    std::cout << "OLEOLE" << std::endl;
     wxApp::OnInitCmdLine(parser);
     parser.SetDesc (g_cmdLineDesc);
     // must refuse '/' as parameter starter or cannot use "/path" style paths
-    //parser.SetSwitchChars (wxT("-"));
+    parser.SetSwitchChars (wxT("-"));
 }
  
 bool StdectApp::OnCmdLineParsed(wxCmdLineParser& parser)
 {
-    std::cout << "OLEOLE" << std::endl;
     wxApp::OnCmdLineParsed(parser);
     for (wxCmdLineArgs::const_iterator it=parser.GetArguments().begin();
                                    it!=parser.GetArguments().end();
@@ -184,13 +184,13 @@ bool StdectApp::OnCmdLineParsed(wxCmdLineParser& parser)
             this->tracefile = it->GetStrVal();
         else if (it->GetShortName().IsSameAs("b"))
             this->filter_lbound = it->GetLongVal();
-        else if (it->GetShortName().IsSameAs("eps"))
+        else if (it->GetShortName().IsSameAs("e"))
             this->eps = it->GetLongVal();
-        else if (it->GetShortName().IsSameAs("minPts"))
+        else if (it->GetShortName().IsSameAs("m"))
             this->minPts = it->GetLongVal();
-        else if (it->GetShortName().IsSameAs("eps-tl"))
+        else if (it->GetShortName().IsSameAs("f"))
             this->eps_tl = it->GetLongVal();
-        else if (it->GetShortName().IsSameAs("minPts-tl"))
+        else if (it->GetShortName().IsSameAs("g"))
             this->minPts_tl = it->GetLongVal();
     }
  

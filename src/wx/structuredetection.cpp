@@ -44,6 +44,7 @@ IMPLEMENT_CLASS( Structuredetection, wxFrame )
 BEGIN_EVENT_TABLE( Structuredetection, wxFrame )
 
 ////@begin Structuredetection event table entries
+    EVT_UPDATE_UI( ID_TREECTRL, Structuredetection::OnTreectrlUpdate )
 ////@end Structuredetection event table entries
 
 END_EVENT_TABLE()
@@ -104,6 +105,7 @@ Structuredetection::~Structuredetection()
 void Structuredetection::Init()
 {
 ////@begin Structuredetection member initialisation
+    dataviewtree_pseudocode = NULL;
 ////@end Structuredetection member initialisation
 }
 
@@ -121,9 +123,9 @@ void Structuredetection::CreateControls()
     itemSplitterWindow2->SetMinimumPaneSize(0);
     itemSplitterWindow2->SetSashGravity(1);
 
-    itemControl3 = new wxDataViewCtrl( itemSplitterWindow2,ID_TREECTRL,wxDefaultPosition,wxDefaultSize,0 );
-    itemControl3->SetName(wxT("code_structure"));
-    itemControl3->SetBackgroundColour(wxColour(255, 255, 255));
+    dataviewtree_pseudocode = new wxDataViewCtrl( itemSplitterWindow2,ID_TREECTRL,wxDefaultPosition,wxDefaultSize, wxDV_ROW_LINES );
+    dataviewtree_pseudocode->SetName(wxT("code_structure"));
+    dataviewtree_pseudocode->SetBackgroundColour(wxColour(255, 255, 255));
 
     wxSplitterWindow* itemSplitterWindow4 = new wxSplitterWindow( itemSplitterWindow2, ID_SPLITTERWINDOW1, wxDefaultPosition, wxSize(100, 100), wxSP_3DBORDER|wxSP_3DSASH|wxNO_BORDER );
     itemSplitterWindow4->SetMinimumPaneSize(0);
@@ -133,7 +135,7 @@ void Structuredetection::CreateControls()
     wxTextCtrl* itemTextCtrl6 = new wxTextCtrl( itemSplitterWindow4, ID_TEXTCTRL, _("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ac lobortis lorem. Nam pretium pellentesque tellus non commodo. Nam tristique tristique elit. Aenean auctor purus non vulputate maximus. Proin sed lacinia dolor. Aliquam elit enim, semper vitae faucibus ac, rhoncus eu velit. Ut iaculis sollicitudin nunc nec rhoncus. Sed in posuere mauris. Maecenas lobortis, eros sit amet auctor cursus, leo nibh euismod purus, eget aliquam turpis enim vel tellus. Nulla a mi at turpis aliquam varius. Nulla in interdum diam. Nullam finibus, dolor id ullamcorper eleifend, quam arcu consequat tellus, commodo pellentesque justo urna quis tellus. Donec lobortis porta lacus id porttitor. In eu interdum lacus. Vestibulum erat augue, pulvinar quis libero vitae, sollicitudin sollicitudin ante. "), wxDefaultPosition, wxSize(-1, 50), wxTE_MULTILINE|wxTE_READONLY|wxHSCROLL|wxTE_WORDWRAP );
 
     itemSplitterWindow4->SplitHorizontally(itemStaticBox5, itemTextCtrl6, 50);
-    itemSplitterWindow2->SplitVertically(itemControl3, itemSplitterWindow4, 50);
+    itemSplitterWindow2->SplitVertically(dataviewtree_pseudocode, itemSplitterWindow4, 50);
 
 ////@end Structuredetection content construction
 }
@@ -173,3 +175,14 @@ wxIcon Structuredetection::GetIconResource( const wxString& name )
     return wxNullIcon;
 ////@end Structuredetection icon retrieval
 }
+
+
+/*
+ * wxEVT_UPDATE_UI event handler for ID_TREECTRL
+ */
+
+void Structuredetection::OnTreectrlUpdate( wxUpdateUIEvent& event )
+{
+    //std::cout << "CC:" << this->dataviewtree_pseudocode->GetColumnCount() << std::endl;
+}
+

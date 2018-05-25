@@ -83,6 +83,8 @@ public:
 
 static const wxCmdLineEntryDesc g_cmdLineDesc [] =
 {
+/*    { wxCMD_LINE_SWITCH, wxT("h"), wxT("help"), wxT("displays help on the command line parameters"),
+          wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
     { 
         wxCMD_LINE_SWITCH, 
         "h", 
@@ -90,7 +92,7 @@ static const wxCmdLineEntryDesc g_cmdLineDesc [] =
         "displays help on the command line parameters",
         wxCMD_LINE_VAL_NONE, 
         wxCMD_LINE_OPTION_HELP 
-    },
+    },*/
     { 
         wxCMD_LINE_OPTION, 
         "t", 
@@ -109,32 +111,32 @@ static const wxCmdLineEntryDesc g_cmdLineDesc [] =
     },
     { 
         wxCMD_LINE_OPTION, 
+        "e", 
         "eps", 
-        "", 
         "Epsilon for the main clustering",
         wxCMD_LINE_VAL_DOUBLE,
         wxCMD_LINE_PARAM_OPTIONAL
     },
     { 
         wxCMD_LINE_OPTION, 
-        "minPts", 
-        "",
+        "m", 
+        "minPts",
         "Minimum points for the main clustering",
         wxCMD_LINE_VAL_DOUBLE,
         wxCMD_LINE_PARAM_OPTIONAL
     },
     { 
         wxCMD_LINE_OPTION, 
-        "eps-tl", 
-        "",
+        "f", 
+        "eps-tl",
         "Epsilon for the delta clustering",
         wxCMD_LINE_VAL_DOUBLE,
         wxCMD_LINE_PARAM_OPTIONAL
     },
     { 
         wxCMD_LINE_OPTION, 
+        "g", 
         "minPts-tl", 
-        "", 
         "Minimum points for the delta clustering",
         wxCMD_LINE_VAL_DOUBLE,
         wxCMD_LINE_PARAM_OPTIONAL

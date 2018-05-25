@@ -129,51 +129,80 @@ wxPseudocode::wxPseudocode(std::vector<GUILoop> top_level_loops)
 {
     for (auto it : top_level_loops)
     {
-        wxPseudocodeItem root = wxPseudocodeItem(
+        wxPseudocodeItem* root = new wxPseudocodeItem(
                 it.getRepresentation(), 
                 it.getDuration(), 
                 it.getMsgSize(), 
                 it.getIPC());
-        root.setParent(NULL);
+        root->setParent(NULL);
         this->items.push_back(root);
-        this->roots.push_back(&(this->items.back()));
-        this->parseChilds(&(this->items.back()), it);
+        this->roots.push_back(root);
+        this->parseChilds(root, &it);
     }
 }
 
-void wxPseudocode::parseChilds(wxPseudocodeItem* parent, GUILoop& loop)
+void wxPseudocode::parseChilds(wxPseudocodeItem* parent, GUILoop* loop)
 {
-    for (auto it : loop.getStatements())
+    for (auto it : loop->getStatements())
     {
-        wxPseudocodeItem child = wxPseudocodeItem(
+        wxPseudocodeItem* child = new wxPseudocodeItem(
                 it->getRepresentation(),
                 it->getDuration(),
                 it->getMsgSize(),
                 it->getIPC());
-        child.setParent(parent);
+        child->setParent(parent);
         this->items.push_back(child);
-        parent->addChild(&(this->items.back()));
+        parent->addChild(child);
+
+        if (it->isLoop())
+            this->parseChilds(child, static_cast<GUILoop*>(it));
     }
 }
 
 bool wxPseudocode::IsContainer(const wxDataViewItem &item) const
 {
-    return static_cast<wxPseudocodeItem*>(item.GetID())->IsContainer();
+    if (!item.IsOk())
+        return true;
+
+    wxPseudocodeItem* node = static_cast<wxPseudocodeItem*>(item.GetID());
+    return node->IsContainer();
 }
 
 wxDataViewItem wxPseudocode::GetParent(const wxDataViewItem &item) const
 {
-    return wxDataViewItem((void*)static_cast<wxPseudocodeItem*>
-            (item.GetID())->GetParent());
+    if (!item.IsOk())
+        return wxDataViewItem(0);
+
+    wxPseudocodeItem* node = static_cast<wxPseudocodeItem*>(item.GetID());
+
+    if (node->GetParent() == NULL)
+        return wxDataViewItem(0);
+    else
+        return wxDataViewItem((void*)node->GetParent());
 }
 
 unsigned int wxPseudocode::GetChildren(const wxDataViewItem& item, 
         wxDataViewItemArray& childs) const
 {
     wxPseudocodeItem* parent = static_cast<wxPseudocodeItem*>(item.GetID());
-    for (auto it : parent->GetChildren())
-        childs.Add(wxDataViewItem((void*)it));
-    return parent->GetChildren().size();
+    int count=0;
+    if (!parent)
+    {
+        for (auto it : this->roots)
+        {
+            count++;
+            childs.Add(wxDataViewItem(it));
+        }
+    }
+    else
+    {
+        for (auto it : parent->GetChildren())
+        {
+            count++;
+            childs.Add(wxDataViewItem(it));
+        }
+    }
+    return count;
 }
 
 unsigned int wxPseudocode::GetColumnCount() const
@@ -205,7 +234,7 @@ void wxPseudocode::GetValue(wxVariant &var, const wxDataViewItem& item,
             var = pitem->GetIPC();
             break;
     }
-    assert(false);
+    //assert(false);
 }
 
 
@@ -222,8 +251,10 @@ void Pseudocode::actual_run(TopLevelLoopVector* input)
                 GUILoop(it->getSuperloop(), this->trace_semantic));
     }
 
-    //for (int i=0; i<this->top_level_loops.size(); ++i)
-    //    std::cout << this->top_level_loops[i];
+    std::cout << "== Actual pseudocode ==" << std::endl;
+    for (int i=0; i<this->top_level_loops.size(); ++i)
+        std::cout << this->top_level_loops[i];
+    std::cout << "=======================" << std::endl;
     
     this->result = new wxPseudocode(this->top_level_loops);
 }

@@ -17,10 +17,12 @@ class Loop
 {
     public:
         Loop()
-            : loop_id(0) {};
+            : loop_id(0)
+            , superloop(NULL) {};
         Loop(size_t loop_id, arma::mat centroid)
             : loop_id(loop_id)
-            , centroid(centroid) {};
+            , centroid(centroid)
+            , superloop(NULL) {};
         void insert(ReducedMPICall *mpi_call)
             { this->mpi_calls.push_back(mpi_call); }
         void setLoopId(size_t loop_id)
@@ -38,6 +40,8 @@ class Loop
             { return this->mpi_calls[0]->getRepetitions(); }
         void setSuperloop(Loop *loop)
             { this->superloop = loop; }
+        Loop* getSuperloop()
+            { return this->superloop; }
         void setSubloop(Loop* loop)
             { this->subloops.push_back(loop); }
         std::vector<ReducedMPICall*> getMpiCalls()

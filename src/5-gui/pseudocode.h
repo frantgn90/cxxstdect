@@ -30,7 +30,7 @@ class GUIRepresentation
             { return this->callpath_str; }
         virtual std::string print() = 0;
 
-        std::string getRepresentation()
+        virtual std::string getRepresentation()
             { return "None"; }
         float getDuration()
             { return 0.0; }
@@ -38,6 +38,8 @@ class GUIRepresentation
             { return 0.0; }
         float getIPC()
             { return 0.0; }
+        virtual bool isLoop()
+            { return false; }
     protected:
         libparaver::UIParaverTraceConfig* trace_semantic;
         std::string getSemantic(int type, int value)
@@ -71,9 +73,16 @@ class GUILoop : public GUIRepresentation
             { return this->statements; }
         std::string print();
         std::string getRepresentation()
-            { return "Loop " 
-                + std::to_string(this->loop->getIterations())
-                + " iterations"; }
+        { 
+            unsigned int iters = this->loop->getIterations();
+            if (this->loop->getSuperloop())
+                iters /= this->loop->getSuperloop()->getIterations();
+
+            return "Loop " + std::to_string(iters) + " iterations"; 
+        }
+
+        virtual bool isLoop()
+            { return true; }
     private:
         std::vector<GUIRepresentation*> statements;
         Loop* loop;
@@ -126,7 +135,7 @@ class wxPseudocodeItem
         float duration;
         float msg_size;
         float ipc;
-        wxPseudocodeItem *parent;
+        wxPseudocodeItem *parent = NULL;
         std::vector<wxPseudocodeItem*> ordered_childs;
 };
 
@@ -145,8 +154,8 @@ class wxPseudocode : public wxDataViewModel
         bool SetValue(const wxVariant& var, const wxDataViewItem& item, unsigned int col);
     private:
         std::vector<wxPseudocodeItem*> roots;
-        std::vector<wxPseudocodeItem> items;
-        void parseChilds(wxPseudocodeItem* parent, GUILoop& loop);
+        std::vector<wxPseudocodeItem*> items;
+        void parseChilds(wxPseudocodeItem* parent, GUILoop* loop);
         std::vector<std::string> coltypes = { "string", "float", 
             "float", "float" };
 };
