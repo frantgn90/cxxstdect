@@ -71,7 +71,7 @@ public:
     double filter_lbound = 0.01;
     double eps = 0.1;
     size_t minPts = 1;
-    double eps_tl = 0.1;
+    double eps_tl = 0.01;
     size_t minPts_tl = 1;
 ////@end StdectApp member variables
 };

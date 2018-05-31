@@ -32,11 +32,11 @@ class GUIRepresentation
 
         virtual std::string getRepresentation()
             { return "None"; }
-        float getDuration()
+        virtual unsigned int getDuration()
             { return 0.0; }
-        float getMsgSize()
+        virtual unsigned int getMsgSize()
             { return 0.0; }
-        float getIPC()
+        virtual float getIPC()
             { return 0.0; }
         virtual bool isLoop()
             { return false; }
@@ -45,7 +45,6 @@ class GUIRepresentation
         std::string getSemantic(int type, int value)
             { return this->trace_semantic->getEventValue(type, value); }
         std::vector<Caller> callpath_str; 
-
 };
 
 class GUIReducedMPICall : public GUIRepresentation
@@ -57,6 +56,12 @@ class GUIReducedMPICall : public GUIRepresentation
         std::string print();
         std::string getRepresentation()
             { return this->mpi_call_str + "()"; }
+        std::vector<unsigned int>* getTasks()
+            { return this->mpicall->getTasks(); }
+        virtual unsigned int getDuration()
+            { return this->mpicall->getDuration(); }
+        virtual unsigned int getMsgSize()
+            { return this->mpicall->getMsgSize(); }
     private:
         std::string mpi_call_str;
         ReducedMPICall* mpicall;
@@ -105,12 +110,14 @@ class wxPseudocodeItem
     public:
         wxPseudocodeItem(){};
         wxPseudocodeItem(std::string line, 
-                float duration, float msg_size, float ipc)
+                unsigned int duration, float msg_size, float ipc, 
+                std::string color="#000")
         {
             this->line = line;
             this->duration = duration;
             this->msg_size = msg_size;
             this->ipc = ipc;
+            this->rgb_color = color;
         }
         void setParent(wxPseudocodeItem* item)
             { this->parent = item; }
@@ -121,10 +128,16 @@ class wxPseudocodeItem
         std::vector<wxPseudocodeItem*> GetChildren()
             { return this->ordered_childs; }
         std::string GetPseudocode()
-            { return this->line; }
-        float GetDuration()
+        {   
+            std::string res = "<span color='" + this->rgb_color +"'>" 
+                + this->line + "</span>";
+            if (!this->parent)
+                res = "<b>" + res + "</b>";
+            return res; 
+        }
+        unsigned int GetDuration()
             { return this->duration; }
-        float GetMsgSize()
+        unsigned int GetMsgSize()
             { return this->msg_size; }
         float GetIPC()
             { return this->ipc; }
@@ -132,11 +145,12 @@ class wxPseudocodeItem
             { return this->ordered_childs.size() > 0; }
     private:
         std::string line;
-        float duration;
+        unsigned int duration;
         float msg_size;
         float ipc;
         wxPseudocodeItem *parent = NULL;
         std::vector<wxPseudocodeItem*> ordered_childs;
+        std::string rgb_color;
 };
 
 class wxPseudocode : public wxDataViewModel
@@ -158,6 +172,7 @@ class wxPseudocode : public wxDataViewModel
         void parseChilds(wxPseudocodeItem* parent, GUILoop* loop);
         std::vector<std::string> coltypes = { "string", "float", 
             "float", "float" };
+        std::vector<std::pair<std::vector<unsigned int>*, std::string>> color_map;
 };
 
 class Pseudocode : public PipelineStage<TopLevelLoopVector, wxPseudocode>

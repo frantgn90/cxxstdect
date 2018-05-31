@@ -143,7 +143,7 @@ bool StdectApp::OnInit()
 
     // Declare all phases
     NPTrace parser;
-    Reducer reducer(trace_info.texe, filter_lbound);
+    Reducer reducer(trace_info.texe, filter_lbound, trace_info.ntasks);
     LoopsIdentification loops_id(eps, minPts);
     LoopsMerge loops_merge(eps_tl, minPts_tl);
     Pseudocode pseudocode(&trace_semantic);

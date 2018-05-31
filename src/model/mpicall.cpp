@@ -91,8 +91,12 @@ ReducedMPICall::ReducedMPICall(MPICall mpicall, unsigned int texe)
 {
     this->tasks.push_back(mpicall.getTask());
     this->last_timestamp.push_back(mpicall.getTimestamp());
-    this->durations.push_back(RunLenghEncVector());
+    this->interrep_times.push_back(RunLenghEncVector());
     this->repetitions.push_back(1);
+    this->durations.push_back(RunLenghEncVector());
+    this->durations.back().push_back(mpicall.getDuration());
+    this->msg_size.push_back(RunLenghEncVector());
+    this->msg_size.back().push_back(mpicall.getMsgSize());
 }
 
 void ReducedMPICall::reduce(MPICall mpic)
@@ -101,17 +105,25 @@ void ReducedMPICall::reduce(MPICall mpic)
     if (it == this->tasks.end())
     {
         this->tasks.push_back(mpic.getTask());
+        //std::sort(this->tasks.begin(), this->tasks.end());
         this->last_timestamp.push_back(mpic.getTimestamp());
-        this->durations.push_back(RunLenghEncVector());
+        this->interrep_times.push_back(RunLenghEncVector());
         this->repetitions.push_back(1);
+        this->durations.push_back(RunLenghEncVector());
+        this->durations.back().push_back(mpic.getDuration());
+        this->msg_size.push_back(RunLenghEncVector());
+        this->msg_size.back().push_back(mpic.getMsgSize());
     }
     else
     {
         auto ind = std::distance(this->tasks.begin(), it);
         this->repetitions[ind] += 1;
 
-        unsigned int last_duration = mpic.getTimestamp() - this->last_timestamp[ind];
-        this->durations[ind].push_back(last_duration);
+        unsigned int last_duration = mpic.getTimestamp() 
+            - this->last_timestamp[ind];
+        this->interrep_times[ind].push_back(last_duration);
+        this->durations[ind].push_back(mpic.getDuration());
+        this->msg_size[ind].push_back(mpic.getMsgSize());
         this->last_timestamp[ind] = mpic.getTimestamp();
     }
 }
@@ -127,14 +139,37 @@ unsigned int ReducedMPICall::getRepetitions()
 
 unsigned int ReducedMPICall::getInterRepTime()
 {
-    if (this->mean_duration.size() < this->durations.size())
-        for (auto v:this->durations)
-            this->mean_duration.push_back(v.getMean());
+    if (this->mean_interrep_times.size() < this->interrep_times.size())
+        for (auto v:this->interrep_times)
+            this->mean_interrep_times.push_back(v.getMean());
 
     return std::accumulate(
-            this->mean_duration.begin(),
-            this->mean_duration.end(), 0)/this->mean_duration.size();
+            this->mean_interrep_times.begin(),
+            this->mean_interrep_times.end(), 0)/this->mean_interrep_times.size();
 }
+
+unsigned int ReducedMPICall::getDuration()
+{
+    if (this->mean_durations.size() < this->durations.size())
+        for (auto v:this->durations)
+            this->mean_durations.push_back(v.getMean());
+
+    return std::accumulate(
+            this->mean_durations.begin(),
+            this->mean_durations.end(), 0)/this->mean_durations.size();
+}
+
+unsigned int ReducedMPICall::getMsgSize()
+{
+    if (this->mean_msg_size.size() < this->msg_size.size())
+        for (auto v:this->msg_size)
+            this->mean_msg_size.push_back(v.getMean());
+
+    return std::accumulate(
+            this->mean_msg_size.begin(),
+            this->mean_msg_size.end(), 0)/this->mean_msg_size.size();
+}
+
 
 float ReducedMPICall::getDelta()
 {

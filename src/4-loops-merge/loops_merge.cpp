@@ -43,15 +43,15 @@ void LoopsMerge::actual_run(LoopVector *input)
     for (int i=0; i < input->size(); ++i)
         data(0,i) = input->at(i).getDelta();
 
-    data = arma::normalise(data);
+    //data = arma::normalise(data);
     size_t nclusters = dbscan.Cluster(data, assignements, centroids);
 
     /****/
-    //std::cout << "Loops: " << input->size() << std::endl;
-    //std::cout << "Top level loops: " << nclusters << std::endl;
-    //data.print("DATA: ");
-    //assignements.print("ASSIGN: ");
-    //centroids.print("CENTR: ");
+    std::cout << "Loops: " << input->size() << std::endl;
+    std::cout << "Top level loops: " << nclusters << std::endl;
+    data.print("DATA: ");
+    assignements.print("ASSIGN: ");
+    centroids.print("CENTR: ");
     /****/
 
     // Create the top level loops objects

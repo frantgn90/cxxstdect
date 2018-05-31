@@ -46,14 +46,33 @@ class Callpath
 class MPICall : public Callpath
 {
     public:
+        MPICall() 
+            : Callpath()
+            , comm_matched(false) {};
         unsigned int getMPIid() { return this->mpiid; };
         unsigned int getSignature() { return this->signature+this->mpiid; };
         unsigned int getMpiType() { return this->mpitype; };
         unsigned int getMpiId() { return this->mpiid; };
         void setMPI(std::vector<std::pair<std::string,std::string>> v);
+        void setDuration(unsigned int d) { this->duration = d; }
+        unsigned int getDuration() { return this->duration; }
+        void matchComm(unsigned int partner, unsigned int size)
+        {
+            this->task_partner = partner;
+            this->msg_size = size;
+            this->comm_matched = true;
+        }
+        bool isMatched()
+            { return this->comm_matched; }
+        unsigned int getMsgSize()
+            { return this->msg_size; }
     private:
         unsigned int mpitype;
         unsigned int mpiid;
+        unsigned int duration;
+        unsigned int msg_size;
+        unsigned int task_partner;
+        bool comm_matched;
 };
 
 class ReducedMPICall : public MPICall
@@ -65,6 +84,8 @@ class ReducedMPICall : public MPICall
         float getDelta();
         unsigned int getRepetitions();
         unsigned int getInterRepTime();
+        unsigned int getDuration();
+        unsigned int getMsgSize();
         std::vector<unsigned int>* getTasks()
             { return &(this->tasks); }
     private:
@@ -72,8 +93,13 @@ class ReducedMPICall : public MPICall
         std::vector<unsigned int> tasks;
         std::vector<unsigned int> repetitions;
         std::vector<unsigned int> last_timestamp;
-        std::vector<unsigned int> mean_duration;
+        std::vector<unsigned int> mean_interrep_times;
+        std::vector<RunLenghEncVector> interrep_times;
+        std::vector<unsigned int> mean_durations;
         std::vector<RunLenghEncVector> durations;
+        std::vector<unsigned int> mean_msg_size;
+        std::vector<RunLenghEncVector> msg_size;
+        std::vector<unsigned int> task_partner;
         unsigned int texe;
 
         void add_time(unsigned int timestamp);

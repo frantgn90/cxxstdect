@@ -59,7 +59,7 @@ class NPComm : public NPRecord
     public:
         NPComm(const std::string line);
         //~NPComm();
-    private:
+    //private:
         unsigned int cpu_send_id;
         unsigned int ptask_send_id;
         unsigned int task_send_id;

@@ -26,17 +26,20 @@
 #define NIT_REGEX "992000"
 
 typedef std::unordered_map<unsigned int, ReducedMPICall> UniqueMpiMap;
+typedef std::unordered_map<unsigned int, NPComm*> CommMap;
 typedef std::vector<ReducedMPICall> UniqueMpiVector;
 
 class Reducer : public PipelineStage<NPRecord, UniqueMpiVector>
 {
     public:
-        Reducer(unsigned int texe, float lb)
+        Reducer(unsigned int texe, float lb, unsigned int ntasks)
             : PipelineStage<NPRecord, UniqueMpiVector>("Reducer", true,false)
             , lbound(lb)
             , texe(texe)
         {
             this->result = new UniqueMpiVector();
+            last_mpicall = std::vector<MPICall>(ntasks);
+            comm_match = std::vector<CommMap>(ntasks);
         }
     private:
         void process(NPEvent *event);
@@ -47,11 +50,15 @@ class Reducer : public PipelineStage<NPRecord, UniqueMpiVector>
         UniqueMpiMap unique_mpicalls;
         void open_mpi(NPEvent *event);
         void close_mpi(NPEvent *event);
+        void papi_tot_ins_hwc(NPEvent *event);
+        void papi_tot_cyc_hwc(NPEvent *event);
         void actual_run(NPRecord *input);
 
         UniqueMpiMap partial_result;
         float lbound;
         unsigned int texe;
+        std::vector<MPICall> last_mpicall;
+        std::vector<CommMap> comm_match;
 };
 
 #endif /* !REDUCER_H */
