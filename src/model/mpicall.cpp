@@ -88,6 +88,7 @@ void MPICall::setMPI(std::vector<std::pair<std::string,std::string>> v)
 ReducedMPICall::ReducedMPICall(MPICall mpicall, unsigned int texe)
     : MPICall(mpicall)
     , texe(texe)
+    , first_timestamp(mpicall.getTimestamp())
 {
     this->tasks.push_back(mpicall.getTask());
     this->last_timestamp.push_back(mpicall.getTimestamp());
@@ -177,4 +178,13 @@ float ReducedMPICall::getDelta()
         return float(this->getRepetitions()*this->getInterRepTime())/this->texe;
     else
         return 0;
+}
+
+
+unsigned int ReducedMPICall::getTimestampAt(unsigned int i)
+{
+    unsigned int res=0;
+    for(int j=0; j<i; ++j)
+        res += this->interrep_times[0][j];
+    return res+this->first_timestamp;
 }

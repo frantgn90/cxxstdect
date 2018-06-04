@@ -20,13 +20,30 @@ struct loops_sort
 void TopLevelLoop::merge()
 {
     std::sort(this->loops.begin(), this->loops.end(), loops_sort());
-    auto it1 = this->loops.begin();
-    auto it2 = it1 + 1;
-    while (it2 != this->loops.end())
+    //auto it1 = this->loops.begin();
+    //auto it2 = it1 + 1;
+    //while (it2 != this->loops.end())
+    //{
+    //    (*it1)->setSuperloop(*it2);
+    //    (*it2)->setSubloop(*it1);
+    //    it1 ++; it2++;
+    //}
+
+    auto it_from = this->loops.begin();
+    while (it_from != this->loops.end()-1)
     {
-        (*it1)->setSuperloop(*it2);
-        (*it2)->setSubloop(*it1);
-        it1 ++; it2++;
+        auto it_to = it_from+1;
+        while (it_to != this->loops.end())
+        {
+            if ((*it_from)->isSubloopOf(*it_to))
+            {
+                (*it_from)->setSuperloop(*it_to);
+                (*it_to)->setSubloop(*it_from);
+                break;
+            }
+            it_to++;
+        }
+        it_from++;
     }
     this->superloop = this->loops.back();
 }
@@ -47,11 +64,11 @@ void LoopsMerge::actual_run(LoopVector *input)
     size_t nclusters = dbscan.Cluster(data, assignements, centroids);
 
     /****/
-    std::cout << "Loops: " << input->size() << std::endl;
-    std::cout << "Top level loops: " << nclusters << std::endl;
-    data.print("DATA: ");
-    assignements.print("ASSIGN: ");
-    centroids.print("CENTR: ");
+    //std::cout << "Loops: " << input->size() << std::endl;
+    //std::cout << "Top level loops: " << nclusters << std::endl;
+    //data.print("DATA: ");
+    //assignements.print("ASSIGN: ");
+    //centroids.print("CENTR: ");
     /****/
 
     // Create the top level loops objects

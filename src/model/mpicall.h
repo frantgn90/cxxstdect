@@ -10,6 +10,8 @@
 
 #include <vector>
 #include <string>
+#include <assert.h>
+#include <iostream>
 
 #define COMPRESS_EPS 0.1
 
@@ -21,6 +23,17 @@ class RunLenghEncVector
             : std::vector<std::pair<unsigned int,unsigned int>>() {}
         void push_back(unsigned int v);
         unsigned int getMean();
+        unsigned int operator[](int i)
+        {
+            unsigned int pos = 0;
+            for (int j=0; j<this->size(); ++j)
+            {
+                pos += this->at(j).first;
+                if (pos > i)
+                    return this->at(j).second;
+            }
+            assert(false);
+        }
 };
 
 class Callpath
@@ -84,10 +97,13 @@ class ReducedMPICall : public MPICall
         float getDelta();
         unsigned int getRepetitions();
         unsigned int getInterRepTime();
+        unsigned int getTimestampAt(unsigned int i);
         unsigned int getDuration();
         unsigned int getMsgSize();
         std::vector<unsigned int>* getTasks()
             { return &(this->tasks); }
+        unsigned int getFirstTimestamp()
+            { return this->first_timestamp; }
     private:
         float delta;
         std::vector<unsigned int> tasks;
@@ -101,6 +117,7 @@ class ReducedMPICall : public MPICall
         std::vector<RunLenghEncVector> msg_size;
         std::vector<unsigned int> task_partner;
         unsigned int texe;
+        unsigned int first_timestamp;
 
         void add_time(unsigned int timestamp);
 };

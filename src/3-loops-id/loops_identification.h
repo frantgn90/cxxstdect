@@ -18,11 +18,18 @@ class Loop
     public:
         Loop()
             : loop_id(0)
-            , superloop(NULL) {};
+            , superloop(NULL)
+            , aliased_with(-1) {};
         Loop(size_t loop_id, arma::mat centroid)
             : loop_id(loop_id)
             , centroid(centroid)
-            , superloop(NULL) {};
+            , superloop(NULL)
+            , aliased_with(-1) {};
+        Loop(size_t loop_id, arma::mat centroid, int aliased_with)
+            : loop_id(loop_id)
+            , centroid(centroid)
+            , superloop(NULL)
+            , aliased_with(aliased_with) {};
         void insert(ReducedMPICall *mpi_call)
             { this->mpi_calls.push_back(mpi_call); }
         void setLoopId(size_t loop_id)
@@ -49,12 +56,24 @@ class Loop
         std::vector<Loop*> getSubloops()
             { return this->subloops; }
         std::set<unsigned int> getTasks();
+        bool isSubloopOf(Loop* l);
+        std::pair<unsigned int, unsigned int> getIterationsBounds(int i);
+        bool isAliased(std::vector<ReducedMPICall*> mpi_calls, unsigned int deph);
+        std::vector<Loop> getAliasedLoops()
+            { return this->aliased_loops; }
+        void superloopAnalysis();
+        int wasAliasedWith()
+            { return this->aliased_with; }
+        bool wasAliased()
+            { return this->aliased_with != -1; }
     private:
         arma::mat centroid;
         size_t loop_id;
         std::vector<ReducedMPICall*> mpi_calls;
         std::vector<Loop*> subloops;
         Loop* superloop;
+        std::vector<Loop> aliased_loops;
+        int aliased_with;
 };
 
 typedef std::vector<Loop> LoopVector;
@@ -73,6 +92,8 @@ class LoopsIdentification : public PipelineStage<UniqueMpiVector, LoopVector>
         double eps;
         size_t minPts;
         void actual_run(UniqueMpiVector *input);
+        void aliasingAnalysis();
+        void superloopAnalysis();
 };
 
 #endif /* !LOOPSIDENTIFICATION_H */
