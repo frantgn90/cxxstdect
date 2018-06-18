@@ -37,7 +37,6 @@ class TopLevelLoop
 
         Loop *superloop;
         std::vector<Loop*> loops;
-        //LoopsRelation loops_relations; // subloop -> superloop
         size_t loop_id;
         float delta;
         unsigned int ntll; // if aliasing could be tll > 1
@@ -53,7 +52,11 @@ class LoopsMerge : public PipelineStage<LoopVector, TopLevelLoopVector>
                     "Loops merge", false, false)
             , eps(eps)
             , minPts(minPts) {};
+        unsigned int getNPhases()
+            { return this->nphases; }
+        std::vector<unsigned int> getDeltas();
     private:
+        unsigned int nphases;
         double eps;
         size_t minPts;
         void actual_run(LoopVector *input);

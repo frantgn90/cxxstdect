@@ -40,6 +40,8 @@ class GUIRepresentation
             { return 0.0; }
         virtual bool isLoop()
             { return false; }
+        virtual std::vector<unsigned int>* getTasks()
+            { return NULL; }
     protected:
         libparaver::UIParaverTraceConfig* trace_semantic;
         std::string getSemantic(int type, int value)
@@ -76,6 +78,8 @@ class GUILoop : public GUIRepresentation
             { return this->loop->getIterations(); }
         std::vector<GUIRepresentation*> getStatements() const
             { return this->statements; }
+        std::vector<unsigned int>* getTasks()
+            { return this->loop->getTasks(); }
         std::string print();
         std::string getRepresentation()
         { 
@@ -109,16 +113,46 @@ class wxPseudocodeItem
 {
     public:
         wxPseudocodeItem(){};
+        wxPseudocodeItem(GUILoop* r, std::string color="#000000")
+            : is_loop(true)
+        {
+            this->init(static_cast<GUIRepresentation*>(r), color);
+        }
+
+        wxPseudocodeItem(GUIReducedMPICall* r, std::string color="#000000")
+            : is_loop(false)
+        {
+            this->init(static_cast<GUIReducedMPICall*>(r), color);
+        }
+
+        wxPseudocodeItem(GUIRepresentation* r, std::string color="#000000")
+            : is_loop(false)
+        {
+            this->init(r, color);
+        }
+
+        void init(GUIRepresentation* r, std::string color="#000000")
+        {
+            this->line = r->getRepresentation();
+            this->duration = r->getDuration();
+            this->msg_size = r->getMsgSize();
+            this->ipc = r->getIPC();
+            this->rgb_color = color;
+            this->actual_statement = r;
+        }
+        /*
         wxPseudocodeItem(std::string line, 
                 unsigned int duration, float msg_size, float ipc, 
-                std::string color="#000")
+                GUIRepresentation* r, std::string color="#000")
         {
             this->line = line;
             this->duration = duration;
             this->msg_size = msg_size;
             this->ipc = ipc;
             this->rgb_color = color;
+            this->actual_statement = r;
         }
+        */
         void setParent(wxPseudocodeItem* item)
             { this->parent = item; }
         void addChild(wxPseudocodeItem* item)
@@ -143,6 +177,10 @@ class wxPseudocodeItem
             { return this->ipc; }
         bool IsContainer()
             { return this->ordered_childs.size() > 0; }
+        bool IsLoop()
+            { return is_loop; }
+        GUIRepresentation* getActualObject()
+            { return this->actual_statement; }
     private:
         std::string line;
         unsigned int duration;
@@ -151,21 +189,31 @@ class wxPseudocodeItem
         wxPseudocodeItem *parent = NULL;
         std::vector<wxPseudocodeItem*> ordered_childs;
         std::string rgb_color;
+        GUIRepresentation* actual_statement;
+        bool is_loop;
 };
 
 class wxPseudocode : public wxDataViewModel
 {
     public:
         wxPseudocode(){};
-        wxPseudocode(std::vector<GUILoop> top_level_loops);
+        wxPseudocode(std::vector<GUILoop*> top_level_loops);
 
         bool IsContainer(const wxDataViewItem &item) const;
         virtual wxDataViewItem GetParent(const wxDataViewItem &item) const;
-        unsigned int GetChildren(const wxDataViewItem& item, wxDataViewItemArray& childs) const;
+        unsigned int GetChildren(const wxDataViewItem& item, 
+                wxDataViewItemArray& childs) const;
         unsigned int GetColumnCount() const;
         wxString GetColumnType(unsigned int col) const;
-        void GetValue(wxVariant &var, const wxDataViewItem& item, unsigned int col) const;
-        bool SetValue(const wxVariant& var, const wxDataViewItem& item, unsigned int col);
+        void GetValue(wxVariant &var, const wxDataViewItem& item, unsigned int 
+                col) const;
+        bool SetValue(const wxVariant& var, const wxDataViewItem& item, 
+                unsigned int col);
+        std::vector<std::pair<std::vector<unsigned int>*, std::string>> 
+        getColormap()
+            { return this->color_map; }
+        void setRanksFilter(std::vector<unsigned int> ranks)
+            { this->ranks_filter = ranks; }
     private:
         std::vector<wxPseudocodeItem*> roots;
         std::vector<wxPseudocodeItem*> items;
@@ -173,6 +221,7 @@ class wxPseudocode : public wxDataViewModel
         std::vector<std::string> coltypes = { "string", "float", 
             "float", "float" };
         std::vector<std::pair<std::vector<unsigned int>*, std::string>> color_map;
+        std::vector<unsigned int> ranks_filter;
 };
 
 class Pseudocode : public PipelineStage<TopLevelLoopVector, wxPseudocode>
@@ -184,7 +233,7 @@ class Pseudocode : public PipelineStage<TopLevelLoopVector, wxPseudocode>
         , trace_semantic(trace_semantic) {};
     private:
         libparaver::UIParaverTraceConfig* trace_semantic;
-        std::vector<GUILoop> top_level_loops;
+        std::vector<GUILoop*> top_level_loops;
         void actual_run(TopLevelLoopVector* input);
 
 

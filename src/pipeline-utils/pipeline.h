@@ -14,6 +14,10 @@
 #include <boost/timer.hpp>
 #include <iostream>
 
+#include <cxxabi.h>
+#include <execinfo.h>
+#include <memory>
+
 class PipelineStageGeneral
 {
     public:
@@ -77,7 +81,7 @@ class PipelineStage : public PipelineStageGeneral
 
             if (!this->next_stage)
             {
-                this->actual_run(input);
+                this->protected_actual_run(input);
             }
             else
             {
@@ -85,7 +89,7 @@ class PipelineStage : public PipelineStageGeneral
                 {
                     while (!this->done)
                     {
-                        this->actual_run(input);
+                        this->protected_actual_run(input);
                         if (this->next_stage->withMR())
                         {
                             this->next_stage->setInput((void *)this->getResult());
@@ -107,7 +111,7 @@ class PipelineStage : public PipelineStageGeneral
                 }
                 else
                 {
-                    this->actual_run(input);
+                    this->protected_actual_run(input);
                     if (this->done)
                     {
                         this->next_stage->setInput((void *)this->getResult());
@@ -121,6 +125,70 @@ class PipelineStage : public PipelineStageGeneral
         T1* input;
         T2* result;
         std::vector<T2*> accum_result; // if no multirecv on target
+        void protected_actual_run(T1* input)
+        {
+            try
+            {
+                this->actual_run(input);
+            }
+            catch(...)
+            {
+                std::cout << this->phasename << ": Default exception catched!" 
+                    << std::endl;
+                backtrace();
+                exit(1);
+            }
+        }
+    
+        std::string demangle( const char* const symbol )
+        {
+            const std::unique_ptr< char, decltype( &std::free ) > demangled(
+                    abi::__cxa_demangle( symbol, 0, 0, 0 ), &std::free );
+            if( demangled ) {
+                return demangled.get();
+            }
+            else {
+                return symbol;
+            }
+        }
+
+        void backtrace()
+        {
+            // TODO: replace hardcoded limit?
+            void* addresses[ 256 ];
+            const int n = ::backtrace( addresses, 
+                    std::extent< decltype( addresses ) >::value );
+            const std::unique_ptr< char*, decltype( &std::free ) > symbols(
+                    ::backtrace_symbols( addresses, n ), &std::free );
+            for( int i = 0; i < n; ++i ) {
+                // we parse the symbols retrieved from backtrace_symbols() to
+                // extract the "real" symbols that represent the mangled names.
+                char* const symbol = symbols.get()[ i ];
+                char* end = symbol;
+                while( *end ) {
+                    ++end;
+                }
+                // scanning is done backwards, since the module name
+                // might contain both '+' or '(' characters.
+                while( end != symbol && *end != '+' ) {
+                    --end;
+                }
+                char* begin = end;
+                while( begin != symbol && *begin != '(' ) {
+                    --begin;
+                }
+
+                if( begin != symbol ) {
+                    std::cout << std::string( symbol, ++begin - symbol );
+                    *end++ = '\0';
+                    std::cout << demangle( begin ) << '+' << end;
+                }
+                else {
+                    std::cout << symbol;
+                }
+                std::cout << std::endl;
+            }
+        }
 
         virtual void actual_run(T1* input) {};
 };

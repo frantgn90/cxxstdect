@@ -48,6 +48,14 @@ void TopLevelLoop::merge()
     this->superloop = this->loops.back();
 }
 
+std::vector<unsigned int> LoopsMerge::getDeltas()
+{
+    std::vector<unsigned int> result;
+    for (auto it : *(this->result))
+        result.push_back(it.getDelta()*100);
+    return result;
+}
+
 void LoopsMerge::actual_run(LoopVector *input)
 {
     // First step is to classify loops by their delta
@@ -72,6 +80,7 @@ void LoopsMerge::actual_run(LoopVector *input)
     /****/
 
     // Create the top level loops objects
+    this->nphases = nclusters;
     this->result = new TopLevelLoopVector(nclusters);
     for (int i=0; i < input->size(); ++i)
     {

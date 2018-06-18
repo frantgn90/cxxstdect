@@ -75,12 +75,12 @@ struct pA_comp {
 };
 
 struct pA_comp_tl {
-    bool operator() (const GUILoop l, const GUILoop r) const { 
-        int N = std::min(l.getNCallers(), r.getNCallers());
+    bool operator() (const GUILoop* l, const GUILoop* r) const { 
+        int N = std::min(l->getNCallers(), r->getNCallers());
         for (int i=0; i<N; ++i)
         {
-            Caller my = l.getCallerAt(i);
-            Caller its = r.getCallerAt(i);
+            Caller my = l->getCallerAt(i);
+            Caller its = r->getCallerAt(i);
 
             if (std::get<2>(my) != std::get<2>(its)) // different file
                 return false; // it is random...
@@ -141,7 +141,7 @@ std::string GUILoop::print()
 {
     std::string result = "Loop " + std::to_string(this->loop->getIterations());
     result += "(";
-    for (auto it : this->loop->getTasks() )
+    for (auto it : *(this->loop->getTasks()) )
         result += std::to_string(it) + ",";
     result += ")\n";
 
@@ -151,20 +151,16 @@ std::string GUILoop::print()
     return result;
 }
 
-wxPseudocode::wxPseudocode(std::vector<GUILoop> top_level_loops)
+wxPseudocode::wxPseudocode(std::vector<GUILoop*> top_level_loops)
 {
     srand(123456);
     for (auto it : top_level_loops)
     {
-        wxPseudocodeItem* root = new wxPseudocodeItem(
-                it.getRepresentation(), 
-                it.getDuration(), 
-                it.getMsgSize(), 
-                it.getIPC());
+        wxPseudocodeItem* root = new wxPseudocodeItem(it);
         root->setParent(NULL);
         this->items.push_back(root);
         this->roots.push_back(root);
-        this->parseChilds(root, &it);
+        this->parseChilds(root, it);
     }
 }
 
@@ -190,7 +186,7 @@ void wxPseudocode::parseChilds(wxPseudocodeItem* parent, GUILoop* loop)
             
             if (!found)
             {
-                unsigned int random = rand();
+                unsigned int random = rand() % 16777215;
                 std::stringstream stream;
                 stream << std::hex << random;
                 color_val = stream.str();
@@ -202,12 +198,7 @@ void wxPseudocode::parseChilds(wxPseudocodeItem* parent, GUILoop* loop)
 
         std::string color = "#"+color_val; 
 
-        wxPseudocodeItem* child = new wxPseudocodeItem(
-                it->getRepresentation(),
-                it->getDuration(),
-                it->getMsgSize(),
-                it->getIPC(),
-                color);
+        wxPseudocodeItem* child = new wxPseudocodeItem(it, color);
         child->setParent(parent);
         this->items.push_back(child);
         parent->addChild(child);
@@ -248,16 +239,50 @@ unsigned int wxPseudocode::GetChildren(const wxDataViewItem& item,
     {
         for (auto it : this->roots)
         {
-            count++;
-            childs.Add(wxDataViewItem(it));
+            if (this->ranks_filter.size() != 0)
+            {
+                GUILoop* loop = static_cast<GUILoop*>(it->getActualObject());
+                std::vector<unsigned int>* tasks = loop->getTasks();
+                for (auto rank : this->ranks_filter)
+                    if (std::find(tasks->begin(), tasks->end(), rank) 
+                            != tasks->end())
+                    {
+                        count++;
+                        childs.Add(wxDataViewItem(it));
+                        break;
+                    }
+            }
+            else
+            {
+                count++;
+                childs.Add(wxDataViewItem(it));
+            }
         }
     }
     else
     {
         for (auto it : parent->GetChildren())
         {
-            count++;
-            childs.Add(wxDataViewItem(it));
+
+            if (this->ranks_filter.size() != 0)
+            {
+                GUIReducedMPICall* mpicall = static_cast<GUIReducedMPICall*>(
+                        it->getActualObject());
+                std::vector<unsigned int>* tasks = mpicall->getTasks();
+                for (auto rank : this->ranks_filter)
+                    if (std::find(tasks->begin(), tasks->end(), rank) 
+                            != tasks->end())
+                    {
+                        count++;
+                        childs.Add(wxDataViewItem(it));
+                        break;
+                    }
+            }
+            else
+            {
+                count++;
+                childs.Add(wxDataViewItem(it));
+            }
         }
     }
     return count;
@@ -307,17 +332,17 @@ void Pseudocode::actual_run(TopLevelLoopVector* input)
     for (auto it = input->begin(); it != input->end(); ++it)
     {
         this->top_level_loops.push_back(
-                GUILoop(it->getSuperloop(), this->trace_semantic));
+                new GUILoop(it->getSuperloop(), this->trace_semantic));
     }
 
     std::sort(this->top_level_loops.begin(), 
             this->top_level_loops.end(), 
             pA_comp_tl());
 
-    std::cout << "== Actual pseudocode ==" << std::endl;
-    for (int i=0; i<this->top_level_loops.size(); ++i)
-        std::cout << this->top_level_loops[i];
-    std::cout << std::endl << "=======================" << std::endl;
+    //std::cout << "== Actual pseudocode ==" << std::endl;
+    //for (int i=0; i<this->top_level_loops.size(); ++i)
+    //    std::cout << this->top_level_loops[i];
+    //std::cout << std::endl << "=======================" << std::endl;
     
     this->result = new wxPseudocode(this->top_level_loops);
 }

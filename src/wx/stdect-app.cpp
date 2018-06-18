@@ -27,7 +27,6 @@
 #include <loops_merge.h>
 #include <pseudocode.h>
 
-
 ////@end includes
 
 
@@ -161,6 +160,14 @@ bool StdectApp::OnInit()
     wxDataViewModel* model = (wxDataViewModel*)pseudocode.getResult();
     mainWindow->SetAssociateModel(model);
 
+
+    std::vector<std::pair<std::vector<unsigned int>*, std::string>> color_map;
+    color_map = pseudocode.getResult()->getColormap();
+
+    for (auto legend_item : color_map )
+        mainWindow->addLegendItem(legend_item.first, legend_item.second);
+
+    mainWindow->setGeneralInfo(loops_merge.getNPhases(), loops_merge.getDeltas());
     return true;
 }
 

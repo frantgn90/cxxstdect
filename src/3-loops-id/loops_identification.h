@@ -19,17 +19,37 @@ class Loop
         Loop()
             : loop_id(0)
             , superloop(NULL)
-            , aliased_with(-1) {};
+            , aliased_with(-1)
+            , is_hidden_superloop(false)
+            , hidden_superloop_iterations(0)
+            , tasks(NULL) {};
         Loop(size_t loop_id, arma::mat centroid)
             : loop_id(loop_id)
             , centroid(centroid)
             , superloop(NULL)
-            , aliased_with(-1) {};
+            , aliased_with(-1)
+            , is_hidden_superloop(false)
+            , hidden_superloop_iterations(0)
+            , tasks(NULL) {};
         Loop(size_t loop_id, arma::mat centroid, int aliased_with)
             : loop_id(loop_id)
             , centroid(centroid)
             , superloop(NULL)
-            , aliased_with(aliased_with) {};
+            , aliased_with(aliased_with) 
+            , is_hidden_superloop(false)
+            , hidden_superloop_iterations(0)
+            , tasks(NULL) {};
+        Loop(size_t loop_id, arma::mat centroid, 
+                bool is_hidden_superloop, int its)
+            : loop_id(loop_id)
+            , centroid(centroid)
+            , superloop(NULL)
+            , aliased_with(aliased_with)
+            , is_hidden_superloop(superloop)
+            , hidden_superloop_iterations(its)
+            , tasks(NULL) {};
+        unsigned int getId()
+            { return this->loop_id; }
         void insert(ReducedMPICall *mpi_call)
             { this->mpi_calls.push_back(mpi_call); }
         void setLoopId(size_t loop_id)
@@ -38,13 +58,24 @@ class Loop
             { this->centroid = centroid; }
         float getDelta()
         {
-            float sum = 0;
-            for (auto it : this->mpi_calls)
-                sum += it->getDelta();
-            return sum/this->mpi_calls.size();
+            if (this->is_hidden_superloop)
+                // All subloops have same delta
+                return this->subloops[0]->getDelta();
+            else
+            {
+                float sum = 0;
+                for (auto it : this->mpi_calls)
+                    sum += it->getDelta();
+                return sum/this->mpi_calls.size();
+            }
         }
         unsigned int getIterations() const
-            { return this->mpi_calls[0]->getRepetitions(); }
+        {   
+            if (this->is_hidden_superloop)
+                return this->hidden_superloop_iterations;
+            else
+                return this->mpi_calls[0]->getRepetitions(); 
+        }
         void setSuperloop(Loop *loop)
             { this->superloop = loop; }
         Loop* getSuperloop()
@@ -55,7 +86,7 @@ class Loop
             { return this->mpi_calls; }
         std::vector<Loop*> getSubloops()
             { return this->subloops; }
-        std::set<unsigned int> getTasks();
+        std::vector<unsigned int>* getTasks();
         bool isSubloopOf(Loop* l);
         std::pair<unsigned int, unsigned int> getIterationsBounds(int i);
         bool isAliased(std::vector<ReducedMPICall*> mpi_calls, unsigned int deph);
@@ -66,6 +97,10 @@ class Loop
             { return this->aliased_with; }
         bool wasAliased()
             { return this->aliased_with != -1; }
+        bool haveHiddenSuperloops()
+            { return this->hidden_superloops.size() > 0; }
+        std::vector<Loop> getHiddenSuperloops()
+            { return this->hidden_superloops; }
     private:
         arma::mat centroid;
         size_t loop_id;
@@ -73,7 +108,12 @@ class Loop
         std::vector<Loop*> subloops;
         Loop* superloop;
         std::vector<Loop> aliased_loops;
+        std::vector<Loop> hidden_superloops;
         int aliased_with;
+        bool is_hidden_superloop;
+        unsigned int hidden_superloop_iterations;
+        std::vector<unsigned int>* tasks;
+
 };
 
 typedef std::vector<Loop> LoopVector;
@@ -93,7 +133,6 @@ class LoopsIdentification : public PipelineStage<UniqueMpiVector, LoopVector>
         size_t minPts;
         void actual_run(UniqueMpiVector *input);
         void aliasingAnalysis();
-        void superloopAnalysis();
 };
 
 #endif /* !LOOPSIDENTIFICATION_H */

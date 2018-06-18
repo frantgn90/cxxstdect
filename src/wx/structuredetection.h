@@ -21,8 +21,8 @@
 #include "wx/frame.h"
 #include "wx/statusbr.h"
 #include "wx/toolbar.h"
-#include "wx/splitter.h"
 #include "wx/statline.h"
+#include "wx/splitter.h"
 ////@end includes
 
 /*!
@@ -33,6 +33,7 @@
 class wxStatusBar;
 class wxSplitterWindow;
 class wxDataViewCtrl;
+class wxBoxSizer;
 ////@end forward declarations
 
 /*!
@@ -47,6 +48,8 @@ class wxDataViewCtrl;
 #define ID_TOOL3 10013
 #define ID_TOOL 10010
 #define ID_TOOL1 10011
+#define ID_TOOL4 10018
+#define ID_TOOL5 10019
 #define ID_SASHWINDOW 10014
 #define ID_SPLITTERWINDOW 10002
 #define ID_TREECTRL 10001
@@ -56,10 +59,12 @@ class wxDataViewCtrl;
 #define ID_TEXTCTRL1 10008
 #define ID_BUTTON 10009
 #define ID_PANEL1 10015
+#define ID_PANEL2 10016
+#define ID_PANEL3 10017
 #define SYMBOL_STRUCTUREDETECTION_STYLE wxCAPTION|wxRESIZE_BORDER|wxSYSTEM_MENU|wxCLOSE_BOX
 #define SYMBOL_STRUCTUREDETECTION_TITLE _("Structure detection")
 #define SYMBOL_STRUCTUREDETECTION_IDNAME ID_STRUCTUREDETECTION
-#define SYMBOL_STRUCTUREDETECTION_SIZE wxSize(600, 700)
+#define SYMBOL_STRUCTUREDETECTION_SIZE wxSize(600, 500)
 #define SYMBOL_STRUCTUREDETECTION_POSITION wxDefaultPosition
 ////@end control identifiers
 
@@ -72,6 +77,8 @@ class Structuredetection: public wxFrame
 {    
     DECLARE_CLASS( Structuredetection )
     DECLARE_EVENT_TABLE()
+private:
+    wxDataViewItemArray last_level_items;
 
 public:
     /// Constructors
@@ -112,8 +119,11 @@ public:
     /// wxEVT_COMMAND_CHECKBOX_CLICKED event handler for ID_CHECKBOX
     void OnCheckboxClick( wxCommandEvent& event );
 
-////@end Structuredetection event handler declarations
+    /// wxEVT_COMMAND_BUTTON_CLICKED event handler for ID_BUTTON
+    void OnFilterButtonClick( wxCommandEvent& event );
 
+////@end Structuredetection event handler declarations
+    void OnItemSelection(wxDataViewEvent& event);
 ////@begin Structuredetection member function declarations
 
     /// Retrieves bitmap resources
@@ -132,7 +142,15 @@ public:
     wxSplitterWindow* main_split;
     wxDataViewCtrl* dataviewtree_pseudocode;
     wxPanel* config_panel;
+    wxTextCtrl* rank_filter_text;
+    wxTextCtrl* burst_threshold_text;
     wxPanel* info_panel;
+    wxPanel* legend_panel;
+    wxBoxSizer* legend_panel_sizer;
+    wxStaticText* general_nphases_label;
+    wxStaticText* general_deltas_label;
+    wxPanel* callpath_panel;
+    wxBoxSizer* selected_item_callpath;
 ////@end Structuredetection member variables
 //
 //
@@ -154,20 +172,29 @@ public:
 
 
         wxDataViewColumn *column1 =
-            new wxDataViewColumn( "Duration", tr2, 1, 120, wxALIGN_RIGHT,
+            new wxDataViewColumn( "Duration", tr2, 1, 110, wxALIGN_RIGHT,
                     wxDATAVIEW_COL_RESIZABLE );
         wxDataViewColumn *column2 =
-            new wxDataViewColumn( "Msg. Size", tr3, 2, 120, wxALIGN_RIGHT,
+            new wxDataViewColumn( "Msg. Size", tr3, 2, 110, wxALIGN_RIGHT,
                     wxDATAVIEW_COL_RESIZABLE );
         wxDataViewColumn *column3 =
-            new wxDataViewColumn( "IPC", tr1, 3, 120, wxALIGN_RIGHT,
+            new wxDataViewColumn( "IPC", tr1, 3, 110, wxALIGN_RIGHT,
                     wxDATAVIEW_COL_RESIZABLE );
 
         dataviewtree_pseudocode->AppendColumn(column0);
         dataviewtree_pseudocode->AppendColumn(column1);
         dataviewtree_pseudocode->AppendColumn(column2);
         dataviewtree_pseudocode->AppendColumn(column3);
+
+        this->dataviewtree_pseudocode->GetModel()->GetChildren(
+                wxDataViewItem(0), 
+                last_level_items);
     }
+
+    void setGeneralInfo(unsigned int nphases, std::vector<unsigned int> deltas);
+    void setSelectionInfo(unsigned int repetitions, std::vector<unsigned int> ranks);
+
+    void addLegendItem(std::vector<unsigned int>* ranks, std::string rgb);
 };
 
 #endif
