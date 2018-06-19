@@ -9,7 +9,18 @@
 // Licence:     
 /////////////////////////////////////////////////////////////////////////////
 
-#include "pseudocode.h"
+// Some utils
+#include <UIParaverTraceConfig.h>
+#include <TraceHeader.h>
+
+// Include workflow phases
+#include <pipeline.h>
+#include <nptrace.h>
+#include <reducer.h>
+#include <loops_identification.h>
+#include <loops_merge.h>
+#include <pseudocode.h>
+
 // For compilers that support precompilation, includes "wx/wx.h".
 #include "wx/wxprec.h"
 
@@ -28,6 +39,7 @@
 #include "structuredetection.h"
 
 ////@begin XPM images
+#include "../../../paraver/git/wxparaver/icons/file_browser.xpm"
 #include "../../imgs/derived_add.xpm"
 #include "../../../paraver/git/wxparaver/icons/derived_substract.xpm"
 #include "../../../paraver/git/wxparaver/icons/cut_trace.xpm"
@@ -51,6 +63,7 @@ IMPLEMENT_CLASS( Structuredetection, wxFrame )
 BEGIN_EVENT_TABLE( Structuredetection, wxFrame )
 
 ////@begin Structuredetection event table entries
+    EVT_MENU( ID_TOOL6, Structuredetection::OnOpenTraceClick )
     EVT_MENU( ID_TOOL2, Structuredetection::OnUnfoldButtonClick )
     EVT_MENU( ID_TOOL3, Structuredetection::OnFoldButtonClick )
     EVT_MENU( ID_TOOL, Structuredetection::OnToolClick )
@@ -120,6 +133,7 @@ void Structuredetection::Init()
 {
 ////@begin Structuredetection member initialisation
     status_bar = NULL;
+    trace_file_path_text = NULL;
     main_hsplit = NULL;
     main_split = NULL;
     dataviewtree_pseudocode = NULL;
@@ -151,33 +165,44 @@ void Structuredetection::CreateControls()
     itemFrame1->SetStatusBar(status_bar);
 
     wxToolBar* itemToolBar3 = CreateToolBar( wxTB_FLAT|wxTB_VERTICAL, ID_TOOLBAR );
-    wxBitmap itemtool4Bitmap(itemFrame1->GetBitmapResource(wxT("../../imgs/derived_add.xpm")));
+    wxBitmap itemtool4Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/file_browser.xpm")));
     wxBitmap itemtool4BitmapDisabled;
-    itemToolBar3->AddTool(ID_TOOL2, wxEmptyString, itemtool4Bitmap, itemtool4BitmapDisabled, wxITEM_NORMAL, _("Unfold more"), _("Unfold more"));
-    wxBitmap itemtool5Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/derived_substract.xpm")));
-    wxBitmap itemtool5BitmapDisabled;
-    itemToolBar3->AddTool(ID_TOOL3, wxEmptyString, itemtool5Bitmap, itemtool5BitmapDisabled, wxITEM_NORMAL, _("Unfold less"), _("Unfold less"));
-    wxBitmap itemtool6Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/cut_trace.xpm")));
+    itemToolBar3->AddTool(ID_TOOL6, wxEmptyString, itemtool4Bitmap, itemtool4BitmapDisabled, wxITEM_NORMAL, wxEmptyString, wxEmptyString);
+    wxStaticLine* itemStaticLine5 = new wxStaticLine( itemToolBar3, wxID_STATIC, wxDefaultPosition, wxSize(-1, 20), wxLI_HORIZONTAL );
+    itemToolBar3->AddControl(itemStaticLine5);
+    wxBitmap itemtool6Bitmap(itemFrame1->GetBitmapResource(wxT("../../imgs/derived_add.xpm")));
     wxBitmap itemtool6BitmapDisabled;
-    itemToolBar3->AddTool(ID_TOOL, wxEmptyString, itemtool6Bitmap, itemtool6BitmapDisabled, wxITEM_NORMAL, _("Show configuration panel"), _("Show configuration panel"));
-    wxBitmap itemtool7Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/histo_zoom.xpm")));
+    itemToolBar3->AddTool(ID_TOOL2, wxEmptyString, itemtool6Bitmap, itemtool6BitmapDisabled, wxITEM_NORMAL, _("Unfold more"), _("Unfold more"));
+    wxBitmap itemtool7Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/derived_substract.xpm")));
     wxBitmap itemtool7BitmapDisabled;
-    itemToolBar3->AddTool(ID_TOOL1, wxEmptyString, itemtool7Bitmap, itemtool7BitmapDisabled, wxITEM_NORMAL, _("Show information panel"), _("Show information panel"));
-    wxStaticLine* itemStaticLine8 = new wxStaticLine( itemToolBar3, wxID_STATIC, wxDefaultPosition, wxSize(-1, 20), wxLI_HORIZONTAL );
-    itemToolBar3->AddControl(itemStaticLine8);
-    wxBitmap itemtool9Bitmap(itemFrame1->GetBitmapResource(wxT("../../imgs/timeline.xpm")));
+    itemToolBar3->AddTool(ID_TOOL3, wxEmptyString, itemtool7Bitmap, itemtool7BitmapDisabled, wxITEM_NORMAL, _("Unfold less"), _("Unfold less"));
+    wxBitmap itemtool8Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/cut_trace.xpm")));
+    wxBitmap itemtool8BitmapDisabled;
+    itemToolBar3->AddTool(ID_TOOL, wxEmptyString, itemtool8Bitmap, itemtool8BitmapDisabled, wxITEM_NORMAL, _("Show configuration panel"), _("Show configuration panel"));
+    wxBitmap itemtool9Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/histo_zoom.xpm")));
     wxBitmap itemtool9BitmapDisabled;
-    itemToolBar3->AddTool(ID_TOOL4, _("Launch paraver"), itemtool9Bitmap, itemtool9BitmapDisabled, wxITEM_NORMAL, wxEmptyString, _("Launch paraver"));
-    wxBitmap itemtool10Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/new_window.xpm")));
-    wxBitmap itemtool10BitmapDisabled;
-    itemToolBar3->AddTool(ID_TOOL5, _("Show clustering"), itemtool10Bitmap, itemtool10BitmapDisabled, wxITEM_NORMAL, wxEmptyString, _("Show clustering"));
-    wxStaticLine* itemStaticLine11 = new wxStaticLine( itemToolBar3, wxID_STATIC, wxDefaultPosition, wxSize(-1, 20), wxLI_HORIZONTAL );
-    itemToolBar3->AddControl(itemStaticLine11);
-    wxBitmap itemtool12Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/delete.xpm")));
+    itemToolBar3->AddTool(ID_TOOL1, wxEmptyString, itemtool9Bitmap, itemtool9BitmapDisabled, wxITEM_NORMAL, _("Show information panel"), _("Show information panel"));
+    wxStaticLine* itemStaticLine10 = new wxStaticLine( itemToolBar3, wxID_STATIC, wxDefaultPosition, wxSize(-1, 20), wxLI_HORIZONTAL );
+    itemToolBar3->AddControl(itemStaticLine10);
+    wxBitmap itemtool11Bitmap(itemFrame1->GetBitmapResource(wxT("../../imgs/timeline.xpm")));
+    wxBitmap itemtool11BitmapDisabled;
+    itemToolBar3->AddTool(ID_TOOL4, _("Launch paraver"), itemtool11Bitmap, itemtool11BitmapDisabled, wxITEM_NORMAL, wxEmptyString, _("Launch paraver"));
+    wxBitmap itemtool12Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/new_window.xpm")));
     wxBitmap itemtool12BitmapDisabled;
-    itemToolBar3->AddTool(wxID_EXIT, wxEmptyString, itemtool12Bitmap, itemtool12BitmapDisabled, wxITEM_NORMAL, _("Exit program"), _("Exit program"));
+    itemToolBar3->AddTool(ID_TOOL5, _("Show clustering"), itemtool12Bitmap, itemtool12BitmapDisabled, wxITEM_NORMAL, wxEmptyString, _("Show clustering"));
+    wxStaticLine* itemStaticLine13 = new wxStaticLine( itemToolBar3, wxID_STATIC, wxDefaultPosition, wxSize(-1, 20), wxLI_HORIZONTAL );
+    itemToolBar3->AddControl(itemStaticLine13);
+    wxBitmap itemtool14Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/delete.xpm")));
+    wxBitmap itemtool14BitmapDisabled;
+    itemToolBar3->AddTool(wxID_EXIT, wxEmptyString, itemtool14Bitmap, itemtool14BitmapDisabled, wxITEM_NORMAL, _("Exit program"), _("Exit program"));
     itemToolBar3->Realize();
     itemFrame1->SetToolBar(itemToolBar3);
+
+    wxBoxSizer* itemBoxSizer15 = new wxBoxSizer(wxVERTICAL);
+    itemFrame1->SetSizer(itemBoxSizer15);
+
+    trace_file_path_text = new wxTextCtrl( itemFrame1, ID_TEXTCTRL2, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer15->Add(trace_file_path_text, 0, wxGROW|wxLEFT|wxRIGHT|wxTOP, 3);
 
     main_hsplit = new wxSplitterWindow( itemFrame1, ID_SASHWINDOW, wxDefaultPosition, wxSize(100, 100), wxSP_BORDER|wxSP_3DSASH|wxDOUBLE_BORDER );
     main_hsplit->SetMinimumPaneSize(0);
@@ -192,77 +217,78 @@ void Structuredetection::CreateControls()
 
     config_panel = new wxPanel( main_split, ID_PANEL, wxDefaultPosition, wxSize(-1, 20), wxTAB_TRAVERSAL );
     config_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
-    wxBoxSizer* itemBoxSizer17 = new wxBoxSizer(wxHORIZONTAL);
-    config_panel->SetSizer(itemBoxSizer17);
+    wxBoxSizer* itemBoxSizer21 = new wxBoxSizer(wxHORIZONTAL);
+    config_panel->SetSizer(itemBoxSizer21);
 
-    wxStaticText* itemStaticText18 = new wxStaticText( config_panel, wxID_STATIC, _("Rank filter"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer17->Add(itemStaticText18, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxStaticText* itemStaticText22 = new wxStaticText( config_panel, wxID_STATIC, _("Rank filter"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer21->Add(itemStaticText22, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
     rank_filter_text = new wxTextCtrl( config_panel, ID_TEXTCTRL, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer17->Add(rank_filter_text, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer21->Add(rank_filter_text, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxStaticLine* itemStaticLine20 = new wxStaticLine( config_panel, wxID_STATIC, wxDefaultPosition, wxSize(10, -1), wxLI_VERTICAL );
-    itemBoxSizer17->Add(itemStaticLine20, 0, wxGROW|wxALL, 5);
+    wxStaticLine* itemStaticLine24 = new wxStaticLine( config_panel, wxID_STATIC, wxDefaultPosition, wxSize(10, -1), wxLI_VERTICAL );
+    itemBoxSizer21->Add(itemStaticLine24, 0, wxGROW|wxALL, 5);
 
-    wxCheckBox* itemCheckBox21 = new wxCheckBox( config_panel, ID_CHECKBOX, _("Show CPU bursts"), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT );
-    itemCheckBox21->SetValue(false);
-    itemBoxSizer17->Add(itemCheckBox21, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxCheckBox* itemCheckBox25 = new wxCheckBox( config_panel, ID_CHECKBOX, _("Show CPU bursts"), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT );
+    itemCheckBox25->SetValue(false);
+    itemBoxSizer21->Add(itemCheckBox25, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
     burst_threshold_text = new wxTextCtrl( config_panel, ID_TEXTCTRL1, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
     burst_threshold_text->Enable(false);
-    itemBoxSizer17->Add(burst_threshold_text, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer21->Add(burst_threshold_text, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxStaticLine* itemStaticLine23 = new wxStaticLine( config_panel, wxID_STATIC, wxDefaultPosition, wxSize(10, -1), wxLI_VERTICAL );
-    itemBoxSizer17->Add(itemStaticLine23, 0, wxGROW|wxALL, 5);
+    wxStaticLine* itemStaticLine27 = new wxStaticLine( config_panel, wxID_STATIC, wxDefaultPosition, wxSize(10, -1), wxLI_VERTICAL );
+    itemBoxSizer21->Add(itemStaticLine27, 0, wxGROW|wxALL, 5);
 
-    wxButton* itemButton24 = new wxButton( config_panel, ID_BUTTON, _("Apply"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer17->Add(itemButton24, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxButton* itemButton28 = new wxButton( config_panel, ID_BUTTON, _("Apply"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer21->Add(itemButton28, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
     main_split->SplitHorizontally(dataviewtree_pseudocode, config_panel, -35);
     info_panel = new wxPanel( main_hsplit, ID_PANEL1, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL );
     info_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
-    wxBoxSizer* itemBoxSizer26 = new wxBoxSizer(wxVERTICAL);
-    info_panel->SetSizer(itemBoxSizer26);
+    wxBoxSizer* itemBoxSizer30 = new wxBoxSizer(wxVERTICAL);
+    info_panel->SetSizer(itemBoxSizer30);
 
     legend_panel = new wxPanel( info_panel, ID_PANEL2, wxDefaultPosition, wxSize(-1, 50), wxTAB_TRAVERSAL );
     legend_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
-    itemBoxSizer26->Add(legend_panel, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 0);
+    itemBoxSizer30->Add(legend_panel, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 0);
     legend_panel_sizer = new wxBoxSizer(wxHORIZONTAL);
     legend_panel->SetSizer(legend_panel_sizer);
 
-    wxBoxSizer* itemBoxSizer29 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer26->Add(itemBoxSizer29, 1, wxGROW|wxALL, 5);
-    wxStaticBox* itemStaticBoxSizer30Static = new wxStaticBox(info_panel, wxID_ANY, _("General info"));
-    wxStaticBoxSizer* itemStaticBoxSizer30 = new wxStaticBoxSizer(itemStaticBoxSizer30Static, wxHORIZONTAL);
-    itemBoxSizer29->Add(itemStaticBoxSizer30, 0, wxGROW|wxALL, 5);
-    wxBoxSizer* itemBoxSizer31 = new wxBoxSizer(wxHORIZONTAL);
-    itemStaticBoxSizer30->Add(itemBoxSizer31, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-    wxStaticText* itemStaticText32 = new wxStaticText( itemStaticBoxSizer30->GetStaticBox(), wxID_STATIC, _("N. Phases:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer31->Add(itemStaticText32, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxBoxSizer* itemBoxSizer33 = new wxBoxSizer(wxHORIZONTAL);
+    itemBoxSizer30->Add(itemBoxSizer33, 1, wxGROW|wxALL, 5);
+    wxStaticBox* itemStaticBoxSizer34Static = new wxStaticBox(info_panel, wxID_ANY, _("General info"));
+    wxStaticBoxSizer* itemStaticBoxSizer34 = new wxStaticBoxSizer(itemStaticBoxSizer34Static, wxHORIZONTAL);
+    itemBoxSizer33->Add(itemStaticBoxSizer34, 0, wxGROW|wxALL, 5);
+    wxBoxSizer* itemBoxSizer35 = new wxBoxSizer(wxHORIZONTAL);
+    itemStaticBoxSizer34->Add(itemBoxSizer35, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxStaticText* itemStaticText36 = new wxStaticText( itemStaticBoxSizer34->GetStaticBox(), wxID_STATIC, _("N. Phases:"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer35->Add(itemStaticText36, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    general_nphases_label = new wxStaticText( itemStaticBoxSizer30->GetStaticBox(), wxID_STATIC, _("2"), wxDefaultPosition, wxDefaultSize, 0 );
+    general_nphases_label = new wxStaticText( itemStaticBoxSizer34->GetStaticBox(), wxID_STATIC, _("2"), wxDefaultPosition, wxDefaultSize, 0 );
     general_nphases_label->SetFont(wxFont(10, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxT("Sans")));
-    itemBoxSizer31->Add(general_nphases_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer35->Add(general_nphases_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxBoxSizer* itemBoxSizer34 = new wxBoxSizer(wxHORIZONTAL);
-    itemStaticBoxSizer30->Add(itemBoxSizer34, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-    wxStaticText* itemStaticText35 = new wxStaticText( itemStaticBoxSizer30->GetStaticBox(), wxID_STATIC, _("Deltas:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer34->Add(itemStaticText35, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxBoxSizer* itemBoxSizer38 = new wxBoxSizer(wxHORIZONTAL);
+    itemStaticBoxSizer34->Add(itemBoxSizer38, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxStaticText* itemStaticText39 = new wxStaticText( itemStaticBoxSizer34->GetStaticBox(), wxID_STATIC, _("Deltas:"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer38->Add(itemStaticText39, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    general_deltas_label = new wxStaticText( itemStaticBoxSizer30->GetStaticBox(), wxID_STATIC, _("0,32; 0,4"), wxDefaultPosition, wxDefaultSize, 0 );
+    general_deltas_label = new wxStaticText( itemStaticBoxSizer34->GetStaticBox(), wxID_STATIC, _("0,32; 0,4"), wxDefaultPosition, wxDefaultSize, 0 );
     general_deltas_label->SetFont(wxFont(10, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxT("Sans")));
-    itemBoxSizer34->Add(general_deltas_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer38->Add(general_deltas_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxStaticBox* itemStaticBoxSizer37Static = new wxStaticBox(info_panel, wxID_ANY, _("Selection callstack"));
-    wxStaticBoxSizer* itemStaticBoxSizer37 = new wxStaticBoxSizer(itemStaticBoxSizer37Static, wxHORIZONTAL);
-    itemBoxSizer29->Add(itemStaticBoxSizer37, 1, wxGROW|wxALL, 5);
-    callpath_panel = new wxPanel( itemStaticBoxSizer37->GetStaticBox(), ID_PANEL3, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+    wxStaticBox* itemStaticBoxSizer41Static = new wxStaticBox(info_panel, wxID_ANY, _("Selection callstack"));
+    wxStaticBoxSizer* itemStaticBoxSizer41 = new wxStaticBoxSizer(itemStaticBoxSizer41Static, wxHORIZONTAL);
+    itemBoxSizer33->Add(itemStaticBoxSizer41, 1, wxGROW|wxALL, 5);
+    callpath_panel = new wxPanel( itemStaticBoxSizer41->GetStaticBox(), ID_PANEL3, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
     callpath_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
-    itemStaticBoxSizer37->Add(callpath_panel, 1, wxGROW|wxALL, 0);
+    itemStaticBoxSizer41->Add(callpath_panel, 1, wxGROW|wxALL, 0);
     selected_item_callpath = new wxBoxSizer(wxVERTICAL);
     callpath_panel->SetSizer(selected_item_callpath);
 
     main_hsplit->SplitHorizontally(main_split, info_panel, -170);
+    itemBoxSizer15->Add(main_hsplit, 1, wxGROW|wxALL, 5);
 
 ////@end Structuredetection content construction
 
@@ -272,6 +298,35 @@ void Structuredetection::CreateControls()
     // Initally filter panel should not be shown
     this->main_hsplit->Unsplit(NULL);
     this->main_split->Unsplit(NULL);
+
+    // Adding columns to dataviewctrl
+    wxDataViewTextRenderer *tr = new wxDataViewTextRenderer();
+    tr->EnableMarkup();
+    wxDataViewColumn *column0 =
+        new wxDataViewColumn( "Pseudocode", tr, 0, 200, wxALIGN_LEFT,
+                wxDATAVIEW_COL_RESIZABLE );
+    wxDataViewTextRenderer *tr1 =
+        new wxDataViewTextRenderer( "double", wxDATAVIEW_CELL_INERT );
+    wxDataViewTextRenderer *tr2 =
+        new wxDataViewTextRenderer( "long", wxDATAVIEW_CELL_INERT );
+    wxDataViewTextRenderer *tr3 =
+        new wxDataViewTextRenderer( "long", wxDATAVIEW_CELL_INERT );
+
+
+    wxDataViewColumn *column1 =
+        new wxDataViewColumn( "Duration", tr2, 1, 110, wxALIGN_RIGHT,
+                wxDATAVIEW_COL_RESIZABLE );
+    wxDataViewColumn *column2 =
+        new wxDataViewColumn( "Msg. Size", tr3, 2, 110, wxALIGN_RIGHT,
+                wxDATAVIEW_COL_RESIZABLE );
+    wxDataViewColumn *column3 =
+        new wxDataViewColumn( "IPC", tr1, 3, 110, wxALIGN_RIGHT,
+                wxDATAVIEW_COL_RESIZABLE );
+
+    dataviewtree_pseudocode->AppendColumn(column0);
+    dataviewtree_pseudocode->AppendColumn(column1);
+    dataviewtree_pseudocode->AppendColumn(column2);
+    dataviewtree_pseudocode->AppendColumn(column3);
 }
 
 
@@ -293,7 +348,12 @@ wxBitmap Structuredetection::GetBitmapResource( const wxString& name )
     // Bitmap retrieval
 ////@begin Structuredetection bitmap retrieval
     wxUnusedVar(name);
-    if (name == wxT("../../imgs/derived_add.xpm"))
+    if (name == wxT("../../../paraver/git/wxparaver/icons/file_browser.xpm"))
+    {
+        wxBitmap bitmap(file_browser_xpm);
+        return bitmap;
+    }
+    else if (name == wxT("../../imgs/derived_add.xpm"))
     {
         wxBitmap bitmap(derived_add_xpm);
         return bitmap;
@@ -534,12 +594,6 @@ void Structuredetection::setGeneralInfo(unsigned int nphases,
     this->general_deltas_label->SetLabel(deltas_str);
 }
 
-void Structuredetection::setSelectionInfo(unsigned int repetitions, 
-        std::vector<unsigned int> ranks)
-{
-}
-
-
 /*
  * wxEVT_COMMAND_BUTTON_CLICKED event handler for ID_BUTTON
  */
@@ -574,5 +628,124 @@ void Structuredetection::OnFilterButtonClick( wxCommandEvent& event )
     mm->setRanksFilter(ranks);
     mm->Cleared();
     dataviewtree_pseudocode->AssociateModel((wxDataViewModel*) mm);
+}
+
+
+/*
+ * wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL6
+ */
+
+void Structuredetection::OnOpenTraceClick( wxCommandEvent& event )
+{
+    std::string path = this->tracefile.substr(0, 
+            this->tracefile.find_last_of("/"));
+    wxFileDialog dialog( this, _( "Load Trace" ), path, _( "" ), 
+            _( "Paraver trace (*.prv;*.prv.gz)|*.prv;*.prv.gz|All files (*.*)|*.*" ),
+            wxFD_OPEN|wxFD_FILE_MUST_EXIST|wxFD_CHANGE_DIR );
+
+    if( dialog.ShowModal() == wxID_OK )
+    {
+        wxString path = dialog.GetPath();
+        this->run(std::string(path));
+    }
+}
+
+
+void Structuredetection::SetAssociateModel(wxDataViewModel* model)
+{
+    dataviewtree_pseudocode->AssociateModel(model);
+    this->dataviewtree_pseudocode->GetModel()->GetChildren(
+            wxDataViewItem(0), 
+            last_level_items);
+}
+
+void Structuredetection::run(std::string tracefile)
+{
+    std::string paraver_pcf;
+    size_t start_pos = tracefile.find(".prv");
+    if (start_pos != std::string::npos)
+    {
+        paraver_pcf = tracefile.substr(0, start_pos);
+        paraver_pcf += ".pcf";
+    }
+    else
+    {
+        std::cout << "Incorrect tracefile: " << tracefile << std::endl;
+        return;
+    }
+    
+    std::cout << "Tracefile: " << tracefile << std::endl;
+    std::cout << "Semantic file: " << paraver_pcf << std::endl;
+
+    struct stat buffer;   
+    if (stat (tracefile.c_str(), &buffer) != 0)
+    {
+        std::cout << "ERROR: Paraver tracefile does not exists." << std::endl;
+        return;
+    }
+    if (stat (paraver_pcf.c_str(), &buffer) != 0)
+    {
+        std::cout << "ERROR: Paraver configuration file does not exists." 
+            << std::endl;
+        return;
+    }
+
+    this->run(tracefile, paraver_pcf,
+            this->eps, this->minPts,
+            this->eps_tl, this->minPts_tl,
+            this->filter_lbound);
+}
+
+void Structuredetection::run(std::string tracefile, std::string paraver_pcf, 
+        double eps, size_t minPts,
+        double eps_tl, size_t minPts_tl,
+        double filter_lbound)
+{
+    if (this->tracefile == tracefile)
+        return;
+
+    this->tracefile = tracefile;
+    this->eps = eps;
+    this->minPts = minPts;
+    this->eps_tl = eps_tl;
+    this->minPts_tl = minPts_tl;
+    this->filter_lbound = filter_lbound;
+
+    this->trace_file_path_text->SetValue(tracefile);
+
+    libparaver::UIParaverTraceConfig trace_semantic;
+    trace_semantic.parse(paraver_pcf);
+
+    TraceHeader trace_info(tracefile);
+
+    // Declare all phases
+    NPTrace parser;
+    Reducer reducer(trace_info.texe, filter_lbound, trace_info.ntasks);
+    LoopsIdentification loops_id(eps, minPts);
+    LoopsMerge loops_merge(eps_tl, minPts_tl);
+    Pseudocode pseudocode(&trace_semantic);
+
+    // Connect them
+    parser.connect(&reducer);
+    reducer.connect(&loops_id);
+    loops_id.connect(&loops_merge);
+    loops_merge.connect(&pseudocode);
+
+    // Just run the first stage
+    parser.setInput(&tracefile);
+    parser.run();
+
+    wxDataViewModel* model = (wxDataViewModel*)pseudocode.getResult();
+    this->SetAssociateModel(model);
+
+
+    std::vector<std::pair<std::vector<unsigned int>*, std::string>> color_map;
+    color_map = pseudocode.getResult()->getColormap();
+
+    //this->legend_panel_sizer->Clear();
+    for (auto legend_item : color_map )
+        this->addLegendItem(legend_item.first, legend_item.second);
+
+    this->setGeneralInfo(loops_merge.getNPhases(), loops_merge.getDeltas());
 }
 

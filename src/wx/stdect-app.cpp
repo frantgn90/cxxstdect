@@ -14,19 +14,6 @@
 #include<string>
 #include<iostream>
 
-// Some utils
-//
-#include <UIParaverTraceConfig.h>
-#include <TraceHeader.h>
-
-// Include workflow phases
-#include <pipeline.h>
-#include <nptrace.h>
-#include <reducer.h>
-#include <loops_identification.h>
-#include <loops_merge.h>
-#include <pseudocode.h>
-
 ////@end includes
 
 
@@ -135,39 +122,25 @@ bool StdectApp::OnInit()
     
     std::cout << "Tracefile: " << this->tracefile << std::endl;
     std::cout << "Semantic file: " << paraver_pcf << std::endl;
-    libparaver::UIParaverTraceConfig trace_semantic;
-    trace_semantic.parse(paraver_pcf);
 
-    TraceHeader trace_info(tracefile);
+    struct stat buffer;   
+    if (stat (this->tracefile.c_str(), &buffer) != 0)
+    {
+        std::cout << "ERROR: Paraver tracefile does not exists." << std::endl;
+        return 1;
+    }
+    if (stat (paraver_pcf.c_str(), &buffer) != 0)
+    {
+        std::cout << "ERROR: Paraver configuration file does not exists." 
+            << std::endl;
+        return 1;
+    }
 
-    // Declare all phases
-    NPTrace parser;
-    Reducer reducer(trace_info.texe, filter_lbound, trace_info.ntasks);
-    LoopsIdentification loops_id(eps, minPts);
-    LoopsMerge loops_merge(eps_tl, minPts_tl);
-    Pseudocode pseudocode(&trace_semantic);
+    mainWindow->run(this->tracefile, paraver_pcf, 
+            this->eps, this->minPts,
+            this->eps_tl, this->minPts_tl,
+            this->filter_lbound);
 
-    // Connect them
-    parser.connect(&reducer);
-    reducer.connect(&loops_id);
-    loops_id.connect(&loops_merge);
-    loops_merge.connect(&pseudocode);
-
-    // Just run the first stage
-    parser.setInput(&tracefile);
-    parser.run();
-
-    wxDataViewModel* model = (wxDataViewModel*)pseudocode.getResult();
-    mainWindow->SetAssociateModel(model);
-
-
-    std::vector<std::pair<std::vector<unsigned int>*, std::string>> color_map;
-    color_map = pseudocode.getResult()->getColormap();
-
-    for (auto legend_item : color_map )
-        mainWindow->addLegendItem(legend_item.first, legend_item.second);
-
-    mainWindow->setGeneralInfo(loops_merge.getNPhases(), loops_merge.getDeltas());
     return true;
 }
 

@@ -83,16 +83,6 @@ public:
 
 static const wxCmdLineEntryDesc g_cmdLineDesc [] =
 {
-/*    { wxCMD_LINE_SWITCH, wxT("h"), wxT("help"), wxT("displays help on the command line parameters"),
-          wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
-    { 
-        wxCMD_LINE_SWITCH, 
-        "h", 
-        "help", 
-        "displays help on the command line parameters",
-        wxCMD_LINE_VAL_NONE, 
-        wxCMD_LINE_OPTION_HELP 
-    },*/
     { 
         wxCMD_LINE_OPTION, 
         "t", 

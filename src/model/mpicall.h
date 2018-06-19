@@ -79,7 +79,7 @@ class MPICall : public Callpath
             { return this->comm_matched; }
         unsigned int getMsgSize()
             { return this->msg_size; }
-    private:
+    protected:
         unsigned int mpitype;
         unsigned int mpiid;
         unsigned int duration;

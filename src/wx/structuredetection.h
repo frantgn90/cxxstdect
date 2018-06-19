@@ -25,6 +25,7 @@
 #include "wx/splitter.h"
 ////@end includes
 
+#include "wx/dataview.h"
 /*!
  * Forward declarations
  */
@@ -44,12 +45,14 @@ class wxBoxSizer;
 #define ID_STRUCTUREDETECTION 10000
 #define ID_STATUSBAR 10005
 #define ID_TOOLBAR 10006
+#define ID_TOOL6 10021
 #define ID_TOOL2 10012
 #define ID_TOOL3 10013
 #define ID_TOOL 10010
 #define ID_TOOL1 10011
 #define ID_TOOL4 10018
 #define ID_TOOL5 10019
+#define ID_TEXTCTRL2 10020
 #define ID_SASHWINDOW 10014
 #define ID_SPLITTERWINDOW 10002
 #define ID_TREECTRL 10001
@@ -79,6 +82,12 @@ class Structuredetection: public wxFrame
     DECLARE_EVENT_TABLE()
 private:
     wxDataViewItemArray last_level_items;
+    std::string tracefile;
+    double filter_lbound = 0.01;
+    double eps = 0.1;
+    size_t minPts = 1;
+    double eps_tl = 0.1;
+    size_t minPts_tl = 1;
 
 public:
     /// Constructors
@@ -97,6 +106,9 @@ public:
     void CreateControls();
 
 ////@begin Structuredetection event handler declarations
+
+    /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL6
+    void OnOpenTraceClick( wxCommandEvent& event );
 
     /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL2
     void OnUnfoldButtonClick( wxCommandEvent& event );
@@ -138,6 +150,7 @@ public:
 
 ////@begin Structuredetection member variables
     wxStatusBar* status_bar;
+    wxTextCtrl* trace_file_path_text;
     wxSplitterWindow* main_hsplit;
     wxSplitterWindow* main_split;
     wxDataViewCtrl* dataviewtree_pseudocode;
@@ -155,46 +168,14 @@ public:
 //
 //
     wxDataViewCtrl* itemControl3;
-    void SetAssociateModel(wxDataViewModel* model)
-    {
-        dataviewtree_pseudocode->AssociateModel(model);
-        wxDataViewTextRenderer *tr = new wxDataViewTextRenderer();
-        tr->EnableMarkup();
-        wxDataViewColumn *column0 =
-            new wxDataViewColumn( "Pseudocode", tr, 0, 200, wxALIGN_LEFT,
-                    wxDATAVIEW_COL_RESIZABLE );
-        wxDataViewTextRenderer *tr1 =
-            new wxDataViewTextRenderer( "double", wxDATAVIEW_CELL_INERT );
-        wxDataViewTextRenderer *tr2 =
-            new wxDataViewTextRenderer( "long", wxDATAVIEW_CELL_INERT );
-        wxDataViewTextRenderer *tr3 =
-            new wxDataViewTextRenderer( "long", wxDATAVIEW_CELL_INERT );
-
-
-        wxDataViewColumn *column1 =
-            new wxDataViewColumn( "Duration", tr2, 1, 110, wxALIGN_RIGHT,
-                    wxDATAVIEW_COL_RESIZABLE );
-        wxDataViewColumn *column2 =
-            new wxDataViewColumn( "Msg. Size", tr3, 2, 110, wxALIGN_RIGHT,
-                    wxDATAVIEW_COL_RESIZABLE );
-        wxDataViewColumn *column3 =
-            new wxDataViewColumn( "IPC", tr1, 3, 110, wxALIGN_RIGHT,
-                    wxDATAVIEW_COL_RESIZABLE );
-
-        dataviewtree_pseudocode->AppendColumn(column0);
-        dataviewtree_pseudocode->AppendColumn(column1);
-        dataviewtree_pseudocode->AppendColumn(column2);
-        dataviewtree_pseudocode->AppendColumn(column3);
-
-        this->dataviewtree_pseudocode->GetModel()->GetChildren(
-                wxDataViewItem(0), 
-                last_level_items);
-    }
-
+    void SetAssociateModel(wxDataViewModel* model);
     void setGeneralInfo(unsigned int nphases, std::vector<unsigned int> deltas);
-    void setSelectionInfo(unsigned int repetitions, std::vector<unsigned int> ranks);
-
     void addLegendItem(std::vector<unsigned int>* ranks, std::string rgb);
+    void run(std::string tracefile, std::string paraver_pcf, 
+        double eps, size_t minPts,
+        double eps_tl, size_t minPts_tl,
+        double filter_lbound);
+    void run(std::string tracefile);
 };
 
 #endif

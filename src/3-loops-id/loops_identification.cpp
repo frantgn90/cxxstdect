@@ -18,6 +18,17 @@ std::pair<unsigned int, unsigned int> Loop::getIterationsBounds(int i)
     return std::make_pair(lower_bound, upper_bound);
 }
 
+void Loop::digest(Loop* l)
+{
+    assert (l->isHiddenSuperloop());
+    
+    for (auto it : l->getSubloops())
+    {
+        it->setSuperloop(this);
+        this->setSubloop(it);
+    }
+}
+
 bool Loop::isSubloopOf(Loop* l)
 {
     // Both loops were aliased in same cluster
@@ -81,63 +92,58 @@ bool Loop::isAliased(std::vector<ReducedMPICall*> mpi_calls, unsigned int deph)
 
     if (split.size() > 0)
     {
-        this->aliased_loops.push_back(Loop(1000+deph, this->centroid, 
+        this->aliased_loops.push_back(new Loop(1000+deph, this->centroid, 
                     this->loop_id));
         for (auto it : mpi_calls)
-            this->aliased_loops.back().insert(it);
+            this->aliased_loops.back()->insert(it);
         this->isAliased(split, deph+1);
     }
     else if(deph > 0)
     {
-        this->aliased_loops.push_back(Loop(1000+deph, this->centroid, 
+        this->aliased_loops.push_back(new Loop(1000+deph, this->centroid, 
                     this->loop_id));
         for (auto it : mpi_calls)
-            this->aliased_loops.back().insert(it);
+            this->aliased_loops.back()->insert(it);
     }
-
     return split.size() > 0;
 }
 
 void Loop::superloopAnalysis()
 {
-    return;
     // Only if it is an aliased loop
     if (this->aliased_loops.size() == 0)
         return;
 
     unsigned int last_init_time = this->aliased_loops[0]
-        .getIterationsBounds(0).first;
+        ->getIterationsBounds(0).first;
     unsigned int last_fini_time = this->aliased_loops[0]
-        .getIterationsBounds(this->aliased_loops[0].getIterations()-2).second;
+        ->getIterationsBounds(this->aliased_loops[0]->getIterations()-2).second;
 
     unsigned int sset = 0;
     std::vector<std::vector<Loop*>> superloops;
     superloops.push_back(std::vector<Loop*>());
-    superloops[sset].push_back(&(this->aliased_loops[0]));
+    superloops[sset].push_back(this->aliased_loops[0]);
 
     for(int i=1; i<this->aliased_loops.size(); ++i)
     {
         unsigned int init_time = this->aliased_loops[i]
-            .getIterationsBounds(0).first;
+            ->getIterationsBounds(0).first;
         unsigned int fini_time = this->aliased_loops[i]
-            .getIterationsBounds(this->aliased_loops[i].getIterations()-2).second;
+            ->getIterationsBounds(this->aliased_loops[i]->getIterations()-2).second;
 
         if (last_init_time < init_time and init_time < last_fini_time)
         {
-            superloops[sset].push_back(&(this->aliased_loops[i]));
+            superloops[sset].push_back(this->aliased_loops[i]);
         }
         else
         {
             sset++;
             superloops.push_back(std::vector<Loop*>());
-            superloops[sset].push_back(&(this->aliased_loops[i]));
+            superloops[sset].push_back(this->aliased_loops[i]);
         }
         last_init_time = init_time;
         last_fini_time = fini_time;
     }
-
-    // Ahora hay que contar cuantas iteraciones tienen los superloops
-    // encontrados.
 
     bool any_superloop = false;
     for (auto it : superloops )
@@ -150,29 +156,32 @@ void Loop::superloopAnalysis()
     {
         if (it.size() == 1)
         {
-            this->hidden_superloops.push_back(*it[0]);
-            continue;
+            this->hidden_superloops.push_back(it[0]);
         }
-
-        auto first_subloop_bounds = it[0]->getIterationsBounds(0);
-        auto second_subloop_bounds = it[1]->getIterationsBounds(1);
-
-        unsigned int subloops_its = 1;
-        while(first_subloop_bounds.second < second_subloop_bounds.first)
+        else
         {
-            subloops_its++;
-            first_subloop_bounds = it[0]->getIterationsBounds(subloops_its);
-        }
+            // Ahora hay que contar cuantas iteraciones tienen los superloops
+            // encontrados.
+            auto first_subloop_bounds = it[0]->getIterationsBounds(0);
+            auto second_subloop_bounds = it[1]->getIterationsBounds(1);
 
-        unsigned int superloop_its = it[0]->getIterations()/subloops_its;
-        this->hidden_superloops.push_back(
-                Loop(2000+this->loop_id, this->centroid, true, superloop_its));
-        Loop* new_hs = &(this->hidden_superloops.back());
+            unsigned int subloops_its = 1;
+            while(first_subloop_bounds.second < second_subloop_bounds.first)
+            {
+                subloops_its++;
+                first_subloop_bounds = it[0]->getIterationsBounds(subloops_its);
+            }
+            unsigned int superloop_its = it[0]->getIterations()/subloops_its;
 
-        for (auto it2 : it)
-        {
-            new_hs->setSubloop(it2);
-            it2->setSuperloop(new_hs);
+            Loop* new_superloop = new Loop(2000+this->loop_id, this->centroid, 
+                    true, superloop_its);
+            this->hidden_superloops.push_back(new_superloop);
+
+            for (auto it2 : it)
+            {
+                new_superloop->setSubloop(it2);
+                it2->setSuperloop(new_superloop);
+            }
         }
     }
 }
@@ -202,14 +211,14 @@ std::vector<unsigned int>* Loop::getTasks()
 
 void LoopsIdentification::aliasingAnalysis()
 {
-    std::vector<Loop> aliased_loops;
+    std::vector<Loop*> aliased_loops;
     for (std::vector<Loop>::iterator it = this->result->begin();
             it != this->result->end();)
     {
         if (it->isAliased(it->getMpiCalls(), 0))
         {
             it->superloopAnalysis(); // look for superloop on aliased loops
-            std::vector<Loop> newloops;
+            std::vector<Loop*> newloops;
             if (it->haveHiddenSuperloops())
                 newloops = it->getHiddenSuperloops();
             else
@@ -218,13 +227,17 @@ void LoopsIdentification::aliasingAnalysis()
             aliased_loops.insert(aliased_loops.begin(), 
                     newloops.begin(), newloops.end());
 
-            it = this->result->erase(it);
+            it = this->result->erase(it); // peligroso, no?
         }
         else
             ++it;
     }
-    this->result->insert(this->result->end(),
-            aliased_loops.begin(), aliased_loops.end());
+    for (auto it : aliased_loops)
+    {
+        this->result->push_back(*it);
+    }
+    //this->result->insert(this->result->end(),
+    //        aliased_loops.begin(), aliased_loops.end());
 }
 
 void LoopsIdentification::actual_run(UniqueMpiVector *input)

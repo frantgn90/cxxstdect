@@ -44,8 +44,8 @@ class Loop
             : loop_id(loop_id)
             , centroid(centroid)
             , superloop(NULL)
-            , aliased_with(aliased_with)
-            , is_hidden_superloop(superloop)
+            , aliased_with(-1)
+            , is_hidden_superloop(is_hidden_superloop)
             , hidden_superloop_iterations(its)
             , tasks(NULL) {};
         unsigned int getId()
@@ -90,7 +90,7 @@ class Loop
         bool isSubloopOf(Loop* l);
         std::pair<unsigned int, unsigned int> getIterationsBounds(int i);
         bool isAliased(std::vector<ReducedMPICall*> mpi_calls, unsigned int deph);
-        std::vector<Loop> getAliasedLoops()
+        std::vector<Loop*> getAliasedLoops()
             { return this->aliased_loops; }
         void superloopAnalysis();
         int wasAliasedWith()
@@ -99,16 +99,19 @@ class Loop
             { return this->aliased_with != -1; }
         bool haveHiddenSuperloops()
             { return this->hidden_superloops.size() > 0; }
-        std::vector<Loop> getHiddenSuperloops()
+        std::vector<Loop*> getHiddenSuperloops()
             { return this->hidden_superloops; }
+        bool isHiddenSuperloop() const
+            { return this->is_hidden_superloop; }
+        void digest(Loop* l);
     private:
         arma::mat centroid;
         size_t loop_id;
         std::vector<ReducedMPICall*> mpi_calls;
         std::vector<Loop*> subloops;
         Loop* superloop;
-        std::vector<Loop> aliased_loops;
-        std::vector<Loop> hidden_superloops;
+        std::vector<Loop*> aliased_loops;
+        std::vector<Loop*> hidden_superloops;
         int aliased_with;
         bool is_hidden_superloop;
         unsigned int hidden_superloop_iterations;

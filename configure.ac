@@ -29,7 +29,7 @@ AC_CONFIG_MACRO_DIR([m4])
 dnl ==================================
 dnl General compiling flags
 dnl ==================================
-CXXFLAGS = -g -Og
+dnl CXXFLAGS = -g -O0
 
 dnl ==================================
 dnl Check dependencies 

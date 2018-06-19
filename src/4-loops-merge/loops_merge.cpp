@@ -11,8 +11,14 @@
 
 struct loops_sort
 {
+    // hidden superloops always must be sorted after actual loops
     inline bool operator() (const Loop* l1, const Loop* l2)
     {
+        if (l1->getIterations() == l2->getIterations())
+        {
+            if (l1->isHiddenSuperloop()) return true;
+            if (l2->isHiddenSuperloop()) return false;
+        }
         return (l1->getIterations() > l2->getIterations());
     }
 };
@@ -20,22 +26,22 @@ struct loops_sort
 void TopLevelLoop::merge()
 {
     std::sort(this->loops.begin(), this->loops.end(), loops_sort());
-    //auto it1 = this->loops.begin();
-    //auto it2 = it1 + 1;
-    //while (it2 != this->loops.end())
-    //{
-    //    (*it1)->setSuperloop(*it2);
-    //    (*it2)->setSubloop(*it1);
-    //    it1 ++; it2++;
-    //}
 
+    //TODO: Reverse merge for data condition detection
+    //
     auto it_from = this->loops.begin();
     while (it_from != this->loops.end()-1)
     {
         auto it_to = it_from+1;
         while (it_to != this->loops.end())
         {
-            if ((*it_from)->isSubloopOf(*it_to))
+            // TODO: Any other better way to do this?
+            if ((*it_from)->isHiddenSuperloop() 
+                    and (*it_from)->getIterations() == (*it_to)->getIterations())
+            {
+                (*it_to)->digest(*it_from);
+            }
+            else if ((*it_from)->isSubloopOf(*it_to))
             {
                 (*it_from)->setSuperloop(*it_to);
                 (*it_to)->setSubloop(*it_from);
