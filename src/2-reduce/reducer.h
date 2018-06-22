@@ -25,6 +25,8 @@
 #define ITE_REGEX "991000"
 #define NIT_REGEX "992000"
 
+#define STATE_RUN 1
+
 typedef std::unordered_map<unsigned int, ReducedMPICall> UniqueMpiMap;
 typedef std::unordered_map<unsigned int, NPComm*> CommMap;
 typedef std::vector<ReducedMPICall> UniqueMpiVector;
@@ -39,6 +41,7 @@ class Reducer : public PipelineStage<NPRecord, UniqueMpiVector>
         {
             this->result = new UniqueMpiVector();
             last_mpicall = std::vector<MPICall>(ntasks);
+            last_cpu_burst = std::vector<CPUBurst>(ntasks);
             comm_match = std::vector<CommMap>(ntasks);
         }
     private:
@@ -50,14 +53,15 @@ class Reducer : public PipelineStage<NPRecord, UniqueMpiVector>
         UniqueMpiMap unique_mpicalls;
         void open_mpi(NPEvent *event);
         void close_mpi(NPEvent *event);
-        void papi_tot_ins_hwc(NPEvent *event);
-        void papi_tot_cyc_hwc(NPEvent *event);
+        void hwc_event(unsigned int task, 
+                std::pair<std::string, std::string> event);
         void actual_run(NPRecord *input);
 
         UniqueMpiMap partial_result;
         float lbound;
         unsigned int texe;
         std::vector<MPICall> last_mpicall;
+        std::vector<CPUBurst> last_cpu_burst;
         std::vector<CommMap> comm_match;
 };
 

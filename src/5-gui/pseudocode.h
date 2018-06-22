@@ -49,6 +49,24 @@ class GUIRepresentation
         std::vector<Caller> callpath_str; 
 };
 
+class GUIReducedCPUBurst : public GUIRepresentation
+{
+    public:
+        GUIReducedCPUBurst(ReducedCPUBurst* cpuburst,
+                libparaver::UIParaverTraceConfig* trace_semantic);
+        std::string print()
+            { return "CPU BURST"; }
+        std::string getRepresentation()
+            { return "<i>Computation burst</i>"; }
+        std::vector<unsigned int>* getTasks()
+            { return this->cpuburst->getTasks(); }
+        virtual unsigned int getDuration()
+            { return this->cpuburst->getDuration(); }
+    private:
+        ReducedCPUBurst *cpuburst;
+        std::vector<std::pair<std::string, unsigned int>> hwc;
+};
+
 class GUIReducedMPICall : public GUIRepresentation
 {
     public:
@@ -64,9 +82,12 @@ class GUIReducedMPICall : public GUIRepresentation
             { return this->mpicall->getDuration(); }
         virtual unsigned int getMsgSize()
             { return this->mpicall->getMsgSize(); }
+        GUIReducedCPUBurst* getPreviousCPUBurst()
+            { return this->cpu_burst; }
     private:
         std::string mpi_call_str;
         ReducedMPICall* mpicall;
+        GUIReducedCPUBurst* cpu_burst;
 };
 
 class GUILoop : public GUIRepresentation
@@ -115,18 +136,25 @@ class wxPseudocodeItem
         wxPseudocodeItem(){};
         wxPseudocodeItem(GUILoop* r, std::string color="#000000")
             : is_loop(true)
+            , is_computation(false)
         {
             this->init(static_cast<GUIRepresentation*>(r), color);
         }
-
         wxPseudocodeItem(GUIReducedMPICall* r, std::string color="#000000")
             : is_loop(false)
+            , is_computation(false)
         {
             this->init(static_cast<GUIReducedMPICall*>(r), color);
         }
-
+        wxPseudocodeItem(GUIReducedCPUBurst* r, std::string color="#000000")
+            : is_loop(false)
+            , is_computation(true)
+        {
+            this->init(static_cast<GUIRepresentation*>(r), color);
+        }
         wxPseudocodeItem(GUIRepresentation* r, std::string color="#000000")
             : is_loop(false)
+            , is_computation(false)
         {
             this->init(r, color);
         }
@@ -167,6 +195,9 @@ class wxPseudocodeItem
                 + this->line + "</span>";
             if (!this->parent)
                 res = "<b>" + res + "</b>";
+            /*else
+                res += "(" + std::to_string(this->actual_statement->
+                    getPreviousCPUBurstDuration()) + ")";*/
             return res; 
         }
         unsigned int GetDuration()
@@ -179,6 +210,8 @@ class wxPseudocodeItem
             { return this->ordered_childs.size() > 0; }
         bool IsLoop()
             { return is_loop; }
+        bool IsComputation()
+            { return is_computation; }
         GUIRepresentation* getActualObject()
             { return this->actual_statement; }
     private:
@@ -191,6 +224,7 @@ class wxPseudocodeItem
         std::string rgb_color;
         GUIRepresentation* actual_statement;
         bool is_loop;
+        bool is_computation;
 };
 
 class wxPseudocode : public wxDataViewModel
@@ -222,6 +256,8 @@ class wxPseudocode : public wxDataViewModel
             "float", "float" };
         std::vector<std::pair<std::vector<unsigned int>*, std::string>> color_map;
         std::vector<unsigned int> ranks_filter;
+        bool show_computations;
+        unsigned int computation_thresshold;
 };
 
 class Pseudocode : public PipelineStage<TopLevelLoopVector, wxPseudocode>

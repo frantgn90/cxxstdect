@@ -98,6 +98,7 @@ ReducedMPICall::ReducedMPICall(MPICall mpicall, unsigned int texe)
     this->durations.back().push_back(mpicall.getDuration());
     this->msg_size.push_back(RunLenghEncVector());
     this->msg_size.back().push_back(mpicall.getMsgSize());
+    this->previous_cpu_burst = ReducedCPUBurst(mpicall.getPreviousCPUBurst());
 }
 
 void ReducedMPICall::reduce(MPICall mpic)
@@ -127,6 +128,7 @@ void ReducedMPICall::reduce(MPICall mpic)
         this->msg_size[ind].push_back(mpic.getMsgSize());
         this->last_timestamp[ind] = mpic.getTimestamp();
     }
+    this->previous_cpu_burst.reduce(mpic.getPreviousCPUBurst());
 }
 
 unsigned int ReducedMPICall::getRepetitions()
@@ -187,4 +189,63 @@ unsigned int ReducedMPICall::getTimestampAt(unsigned int i)
     for(int j=0; j<i; ++j)
         res += this->interrep_times[0][j];
     return res+this->first_timestamp;
+}
+
+void CPUBurst::addHWCounter(unsigned int hwc_type, unsigned int hwc_value)
+{
+    this->hwc_type.push_back(hwc_type);
+    this->hwc_value.push_back(hwc_value);
+}
+
+void ReducedCPUBurst::reduce(CPUBurst cpu_burst)
+{
+    auto it = std::find(this->tasks.begin(),this->tasks.end(), cpu_burst.getTask());
+    if (it == this->tasks.end())
+    {
+        this->tasks.push_back(cpu_burst.getTask());
+        this->repetitions.push_back(1);
+        this->durations.push_back(RunLenghEncVector());
+        this->durations.back().push_back(cpu_burst.getDuration());
+
+        this->hwc_types.push_back(std::vector<unsigned int>());
+        this->hwc_values.push_back(std::vector<RunLenghEncVector>());
+
+        for (int i=0; i < cpu_burst.getHWCTypes().size(); ++i)
+        {
+            unsigned int hwc_type = cpu_burst.getHWCTypes()[i];
+            unsigned int hwc_value = cpu_burst.getHWCValues()[i];
+
+            this->hwc_types.back().push_back(hwc_type);
+            this->hwc_values.back().push_back(RunLenghEncVector());
+            this->hwc_values.back().back().push_back(hwc_value);
+        }
+    }
+    else
+    {
+        auto ind = std::distance(this->tasks.begin(), it);
+        this->repetitions[ind] += 1;
+
+        this->durations[ind].push_back(cpu_burst.getDuration());
+        for (int i=0; i < cpu_burst.getHWCTypes().size(); ++i)
+        {
+            unsigned int hwc_type = cpu_burst.getHWCTypes()[i];
+            unsigned int hwc_value = cpu_burst.getHWCValues()[i];
+
+            auto it = std::find(this->hwc_types[ind].begin(), 
+                    this->hwc_types[ind].end(), 
+                    hwc_type);
+
+            if (it != this->hwc_types[ind].end())
+            {
+                auto ind2 = std::distance(this->hwc_types[ind].begin(), it);
+                this->hwc_values[ind][ind2].push_back(hwc_value);
+            }
+            else
+            {
+                this->hwc_types[ind].push_back(hwc_type);
+                this->hwc_values[ind].push_back(RunLenghEncVector());
+                this->hwc_values[ind].back().push_back(hwc_value);
+            }
+        }
+    }
 }

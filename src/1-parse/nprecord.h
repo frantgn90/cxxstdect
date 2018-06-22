@@ -48,6 +48,9 @@ class NPEvent : public NPRecord
         unsigned int getNEvents() { return this->type.size(); };
         std::vector<std::pair<std::string,std::string>> 
             getEvents(const std::string type);
+        std::vector<std::pair<std::string,std::string>> 
+            getEvents();
+
         
     private:
         std::vector<std::string> type;
@@ -82,6 +85,12 @@ class NPStat : public NPRecord
 {
     public:
         NPStat(const std::string line);
+        unsigned int getState()
+            { return this->state; }
+        unsigned int getBeginTime()
+            { return this->begin_time; }
+        unsigned int getEndTime()
+            { return this->end_time; }
     private:
         unsigned int begin_time;
         unsigned int end_time;

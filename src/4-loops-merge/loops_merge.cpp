@@ -35,7 +35,6 @@ void TopLevelLoop::merge()
         auto it_to = it_from+1;
         while (it_to != this->loops.end())
         {
-            // TODO: Any other better way to do this?
             if ((*it_from)->isHiddenSuperloop() 
                     and (*it_from)->getIterations() == (*it_to)->getIterations())
             {

@@ -80,6 +80,17 @@ NPEvent::getEvents(const std::string type)
     return res;
 }
 
+std::vector<std::pair<std::string,std::string>> 
+NPEvent::getEvents()
+{
+    std::vector<std::pair<std::string, std::string>> res;
+    for (int i=0; i<this->type.size(); ++i)
+    {
+        res.push_back(make_pair(this->type[i], this->value[i]));
+    }
+    return res;
+}
+
 NPComm::NPComm(const std::string line)
     : NPRecord(line)
 {

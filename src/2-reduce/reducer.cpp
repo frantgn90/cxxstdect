@@ -11,12 +11,12 @@
 
 #define TID(event) event->getTask()-1
 
-void Reducer::papi_tot_ins_hwc(NPEvent *event)
+void Reducer::hwc_event(unsigned int task, 
+        std::pair<std::string, std::string> event)
 {
-}
-
-void Reducer::papi_tot_cyc_hwc(NPEvent *event)
-{
+    this->last_cpu_burst[task].addHWCounter(
+            std::atoll(event.first.c_str()),
+            std::atoll(event.second.c_str()));
 }
 
 void Reducer::open_mpi(NPEvent *event)
@@ -27,8 +27,9 @@ void Reducer::open_mpi(NPEvent *event)
     mpic.setMPI(event->getEvents(MPI_REGEX));
     mpic.setPath(event->getEvents(LIN_REGEX));
     mpic.setCall(event->getEvents(CAL_REGEX));
+    mpic.setPreviousCPUBurst(this->last_cpu_burst[TID(event)]);
 
-    this->last_mpicall[event->getTask()-1] = mpic;
+    this->last_mpicall[TID(event)] = mpic;
 }
 
 void Reducer::close_mpi(NPEvent *event)
@@ -73,10 +74,10 @@ void Reducer::actual_run(NPRecord *record)
         return;
     }
 
-    if (record->getType() == PRV_EVENT)
-        this->process(static_cast<NPEvent*>(record));
-    else if (record->getType() == PRV_STATE)
+    if (record->getType() == PRV_STATE)
         this->process(static_cast<NPStat*>(record));
+    else if (record->getType() == PRV_EVENT)
+        this->process(static_cast<NPEvent*>(record));
     else if (record->getType() == PRV_COMM)
         this->process(static_cast<NPComm*>(record));
 }
@@ -93,10 +94,7 @@ void Reducer::process(NPEvent *event)
     }
     else if((i = event->existEvent(HWC_REGEX)) != -1)
     {
-        if (event->getEvent(i).first.find("42000050") != std::string::npos)
-            this->papi_tot_ins_hwc(event);
-        else if (event->getEvent(i).first.find("42000059") != std::string::npos)
-            this->papi_tot_cyc_hwc(event);
+        this->hwc_event(TID(event),event->getEvent(i));
     }
 }
 
@@ -111,7 +109,14 @@ void Reducer::process(NPComm *comm)
 }
 
 void Reducer::process(NPStat *stat)
-{}
+{
+    if (stat->getState() == 1)
+    {
+        CPUBurst new_burst(stat->getTask(), 
+                stat->getEndTime() - stat->getBeginTime());
+        this->last_cpu_burst[TID(stat)] = new_burst;
+    }
+}
 
 void Reducer::filter()
 {

@@ -70,7 +70,7 @@ BEGIN_EVENT_TABLE( Structuredetection, wxFrame )
     EVT_MENU( ID_TOOL1, Structuredetection::OnInfoButtonClick )
     EVT_MENU( wxID_EXIT, Structuredetection::OnExitClick )
     EVT_UPDATE_UI( ID_TREECTRL, Structuredetection::OnTreectrlUpdate )
-    EVT_CHECKBOX( ID_CHECKBOX, Structuredetection::OnCheckboxClick )
+    EVT_CHECKBOX( ID_CHECKBOX, Structuredetection::OnShowComputationsCheckboxClick )
     EVT_BUTTON( ID_BUTTON, Structuredetection::OnFilterButtonClick )
 ////@end Structuredetection event table entries
     EVT_DATAVIEW_SELECTION_CHANGED( ID_TREECTRL, Structuredetection::OnItemSelection)
@@ -510,12 +510,9 @@ void Structuredetection::OnInfoButtonClick( wxCommandEvent& event )
  * wxEVT_COMMAND_CHECKBOX_CLICKED event handler for ID_CHECKBOX
  */
 
-void Structuredetection::OnCheckboxClick( wxCommandEvent& event )
+void Structuredetection::OnShowComputationsCheckboxClick( wxCommandEvent& event )
 {
-////@begin wxEVT_COMMAND_CHECKBOX_CLICKED event handler for ID_CHECKBOX in Structuredetection.
-    // Before editing this code, remove the block markers.
-    event.Skip();
-////@end wxEVT_COMMAND_CHECKBOX_CLICKED event handler for ID_CHECKBOX in Structuredetection. 
+    this->burst_threshold_text->Enable(event.IsChecked());
 }
 
 void Structuredetection::addLegendItem(std::vector<unsigned int>* ranks, 
@@ -618,13 +615,19 @@ void Structuredetection::OnFilterButtonClick( wxCommandEvent& event )
             if (pos == std::string::npos)
                 break;
         }
-        //for (auto it : ranks)
-        //    std::cout << it << std::endl;
+    }
+
+    wxPseudocode* mm = static_cast<wxPseudocode*>(dataviewtree_pseudocode
+            ->GetModel());
+
+    if (this->burst_threshold_text->IsEnabled())
+    {
+        std::string th(this->burst_threshold_text->GetLineText(0));
+        //mm->showComputations(true);
+        //mm->setComputationsThresshold(std::atoll(th.c_str());
     }
 
     // Configure model
-    wxPseudocode* mm = static_cast<wxPseudocode*>(dataviewtree_pseudocode
-            ->GetModel());
     mm->setRanksFilter(ranks);
     mm->Cleared();
     dataviewtree_pseudocode->AssociateModel((wxDataViewModel*) mm);

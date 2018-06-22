@@ -36,6 +36,84 @@ class RunLenghEncVector
         }
 };
 
+class CPUBurst
+{
+    public:
+        CPUBurst()
+            : duration(0) {}
+        CPUBurst(unsigned int task, unsigned int duration)
+            : duration(duration) {}
+        unsigned int getDuration()
+            { return duration; }
+        std::vector<unsigned int> getHWCTypes()
+            { return this->hwc_type; }
+        std::vector<unsigned int> getHWCValues()
+            { return this->hwc_value; }
+        void addHWCounter(unsigned int hwc_type, unsigned int hwc_value);
+        unsigned int getTask() {return this->task;};
+    private:
+        unsigned int task;
+        unsigned int duration;
+        std::vector<unsigned int> hwc_type;
+        std::vector<unsigned int> hwc_value;
+};
+
+class ReducedCPUBurst
+{
+    public:
+        ReducedCPUBurst() {}
+        ReducedCPUBurst(CPUBurst cpu_burst)
+        {
+            this->tasks.push_back(cpu_burst.getTask());
+            this->repetitions.push_back(1);
+            this->durations.push_back(RunLenghEncVector());
+            this->durations.back().push_back(cpu_burst.getDuration());
+
+            this->hwc_types.push_back(std::vector<unsigned int>());
+            this->hwc_values.push_back(std::vector<RunLenghEncVector>());
+
+            for (int i=0; i < cpu_burst.getHWCTypes().size(); ++i)
+            {
+                unsigned int hwc_type = cpu_burst.getHWCTypes()[i];
+                unsigned int hwc_value = cpu_burst.getHWCValues()[i];
+
+                this->hwc_types.back().push_back(hwc_type);
+                this->hwc_values.back().push_back(RunLenghEncVector());
+                this->hwc_values.back().back().push_back(hwc_value);
+            }
+        }
+        void reduce(CPUBurst);
+        // TODO: Is just showing the first rank HWC information. Fix it!
+        unsigned int getDuration()
+        { 
+            return this->durations[0].getMean();
+            /*
+            unsigned int sum=0;
+            for (auto it : this->durations)
+                sum += it.getMean();
+            return sum/this->durations.size();
+            */
+        }
+        // TODO: Is just showing the first rank HWC information. Fix it!
+        unsigned int getHWCCount()
+            { return this->hwc_types[0].size(); }
+        std::vector<unsigned int>* getTasks()
+            { return &(this->tasks); }
+        // TODO: Is just showing the first rank HWC information. Fix it!
+        std::pair<unsigned int, unsigned int> getHWCAt(unsigned int i)
+        {
+            return std::make_pair(this->hwc_types[0][i], 
+                    this->hwc_values[0][i].getMean());
+        }
+    private:
+        std::vector<unsigned int> repetitions;
+        std::vector<unsigned int> tasks;
+        std::vector<RunLenghEncVector> durations;
+        std::vector<std::vector<unsigned int>> hwc_types;
+        std::vector<std::vector<RunLenghEncVector>> hwc_values;
+};
+
+
 class Callpath
 {
     public:
@@ -79,6 +157,10 @@ class MPICall : public Callpath
             { return this->comm_matched; }
         unsigned int getMsgSize()
             { return this->msg_size; }
+        void setPreviousCPUBurst(CPUBurst burst)
+            { this->previous_cpu_burst = burst; }
+        CPUBurst getPreviousCPUBurst()
+            { return this->previous_cpu_burst; }
     protected:
         unsigned int mpitype;
         unsigned int mpiid;
@@ -86,6 +168,7 @@ class MPICall : public Callpath
         unsigned int msg_size;
         unsigned int task_partner;
         bool comm_matched;
+        CPUBurst previous_cpu_burst;
 };
 
 class ReducedMPICall : public MPICall
@@ -104,6 +187,14 @@ class ReducedMPICall : public MPICall
             { return &(this->tasks); }
         unsigned int getFirstTimestamp()
             { return this->first_timestamp; }
+        ReducedCPUBurst* getPreviousCPUBurst()
+        {
+            return &(this->previous_cpu_burst);
+        }
+        unsigned int getPreviousCPUBurstDuration()
+        {
+            return this->previous_cpu_burst.getDuration();
+        }
     private:
         float delta;
         std::vector<unsigned int> tasks;
@@ -116,6 +207,7 @@ class ReducedMPICall : public MPICall
         std::vector<unsigned int> mean_msg_size;
         std::vector<RunLenghEncVector> msg_size;
         std::vector<unsigned int> task_partner;
+        ReducedCPUBurst previous_cpu_burst;
         unsigned int texe;
         unsigned int first_timestamp;
 

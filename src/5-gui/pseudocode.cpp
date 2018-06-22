@@ -11,10 +11,28 @@
 #include <algorithm>
 #include <stdlib.h>
 
+GUIReducedCPUBurst::GUIReducedCPUBurst(
+        ReducedCPUBurst *cpuburst,
+        libparaver::UIParaverTraceConfig* trace_semantic)
+    : GUIRepresentation(trace_semantic)
+    , cpuburst(cpuburst)
+{
+
+    for (unsigned int i=0; i<cpuburst->getHWCCount(); ++i)
+    {
+        auto hwc_v = cpuburst->getHWCAt(i);
+        std::string hwc_name = trace_semantic->getEventType(hwc_v.first);
+        this->hwc.push_back(std::make_pair(hwc_name, hwc_v.second));
+    }
+}
+
+
 GUIReducedMPICall::GUIReducedMPICall(
         ReducedMPICall *mpicall,
         libparaver::UIParaverTraceConfig* trace_semantic)
     : GUIRepresentation(trace_semantic)
+    , cpu_burst(new GUIReducedCPUBurst(
+            mpicall->getPreviousCPUBurst(),trace_semantic))
 {
 
     std::string srcpos_regex = "^([0-9]+) \\(((.+))(,.+)?\\)$";
@@ -113,6 +131,15 @@ GUILoop::GUILoop(Loop* loop,
 
     // ordenar this->statements por posicion en el codigo
     std::sort(this->statements.begin(), this->statements.end(), pA_comp());
+
+    // TODO: break up 'previous cpu burst' to new GUIRepresentation objects
+    /*for (auto it : this->statements)
+    {
+        if (!it->isLoop())
+        {
+            this->statement.insert(it->getGUICPUBurst());
+        }
+    }*/
 }
 
 std::ostream &operator<<(std::ostream &output, GUIRepresentation &r)
@@ -152,6 +179,8 @@ std::string GUILoop::print()
 }
 
 wxPseudocode::wxPseudocode(std::vector<GUILoop*> top_level_loops)
+    : show_computations(false)
+    , computation_thresshold(0)
 {
     srand(123456);
     for (auto it : top_level_loops)
@@ -197,6 +226,16 @@ void wxPseudocode::parseChilds(wxPseudocodeItem* parent, GUILoop* loop)
             color_val = "000000"; // black by default
 
         std::string color = "#"+color_val; 
+
+        if (!it->isLoop())
+        {
+            GUIReducedMPICall* mpicall = static_cast<GUIReducedMPICall*>(it);
+            wxPseudocodeItem* burst = new wxPseudocodeItem(
+                    mpicall->getPreviousCPUBurst(), "#bbb");
+            burst->setParent(parent);
+            this->items.push_back(burst);
+            parent->addChild(burst);
+        }
 
         wxPseudocodeItem* child = new wxPseudocodeItem(it, color);
         child->setParent(parent);
@@ -263,7 +302,6 @@ unsigned int wxPseudocode::GetChildren(const wxDataViewItem& item,
     {
         for (auto it : parent->GetChildren())
         {
-
             if (this->ranks_filter.size() != 0)
             {
                 GUIReducedMPICall* mpicall = static_cast<GUIReducedMPICall*>(
@@ -273,15 +311,21 @@ unsigned int wxPseudocode::GetChildren(const wxDataViewItem& item,
                     if (std::find(tasks->begin(), tasks->end(), rank) 
                             != tasks->end())
                     {
-                        count++;
-                        childs.Add(wxDataViewItem(it));
-                        break;
+                        if (!it->IsComputation())
+                        {
+                            count++;
+                            childs.Add(wxDataViewItem(it));
+                            break;
+                        }
                     }
             }
             else
             {
-                count++;
-                childs.Add(wxDataViewItem(it));
+                if (!it->IsComputation())
+                {
+                    count++;
+                    childs.Add(wxDataViewItem(it));
+                }
             }
         }
     }

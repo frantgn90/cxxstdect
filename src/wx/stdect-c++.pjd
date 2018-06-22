@@ -1522,7 +1522,7 @@
                     </document>
                     <document>
                       <string name="proxy-type">"wbCheckBoxProxy"</string>
-                      <string name="event-handler-0">"wxEVT_COMMAND_CHECKBOX_CLICKED|OnCheckboxClick|NONE||Structuredetection"</string>
+                      <string name="event-handler-0">"wxEVT_COMMAND_CHECKBOX_CLICKED|OnShowComputationsCheckboxClick|NONE||Structuredetection"</string>
                       <string name="filename">""</string>
                       <string name="icon-name">"checkbox"</string>
                       <long name="is-transient">0</long>

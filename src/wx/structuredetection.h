@@ -129,7 +129,7 @@ public:
     void OnTreectrlUpdate( wxUpdateUIEvent& event );
 
     /// wxEVT_COMMAND_CHECKBOX_CLICKED event handler for ID_CHECKBOX
-    void OnCheckboxClick( wxCommandEvent& event );
+    void OnShowComputationsCheckboxClick( wxCommandEvent& event );
 
     /// wxEVT_COMMAND_BUTTON_CLICKED event handler for ID_BUTTON
     void OnFilterButtonClick( wxCommandEvent& event );
