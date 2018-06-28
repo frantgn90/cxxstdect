@@ -68,7 +68,7 @@ public:
 
 ////@begin StdectApp member variables
     std::string tracefile;
-    double filter_lbound = 0.01;
+    double filter_lbound = 0.1;
     double eps = 0.1;
     size_t minPts = 1;
     double eps_tl = 0.1;

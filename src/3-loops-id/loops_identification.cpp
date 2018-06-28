@@ -11,11 +11,25 @@
 
 std::pair<unsigned int, unsigned int> Loop::getIterationsBounds(int i)
 {
-    ReducedMPICall* first_mpicall = this->mpi_calls[0];
+    if (!this->is_hidden_superloop)
+    {
+        ReducedMPICall* first_mpicall = this->mpi_calls[0];
 
-    unsigned int lower_bound = first_mpicall->getTimestampAt(i);
-    unsigned int upper_bound = first_mpicall->getTimestampAt(i+1);
-    return std::make_pair(lower_bound, upper_bound);
+        unsigned int lower_bound = first_mpicall->getTimestampAt(i);
+        unsigned int upper_bound = first_mpicall->getTimestampAt(i+1);
+        return std::make_pair(lower_bound, upper_bound);
+    }
+    else
+    {
+        // TODO : Problems when there is a hidden superloop
+        auto first_mpicall_bounds = this->subloops[0]->getIterationsBounds(
+                i*this->subloops[0]->getIterations()/this->getIterations());
+        auto last_mpicall_bounds = this->subloops.back()->getIterationsBounds(
+                i*this->subloops.back()->getIterations()/this->getIterations());
+        
+        return std::make_pair(first_mpicall_bounds.first, 
+                last_mpicall_bounds.second);
+    }
 }
 
 void Loop::digest(Loop* l)
@@ -36,6 +50,18 @@ bool Loop::isSubloopOf(Loop* l)
         if (this->wasAliasedWith() == l->wasAliasedWith())
             return false;
 
+    int i = 0;
+    auto just_one_it = l->getIterationsBounds(0);
+    auto my_it = this->getIterationsBounds(0);
+    while(my_it.second < just_one_it.second)
+    {
+        if (my_it.first > just_one_it.first)
+            return true;
+        my_it = this->getIterationsBounds(++i);
+    }
+    return false;
+    
+
     std::pair<unsigned int, unsigned int> other_it_bounds = 
         l->getIterationsBounds(0);
     std::pair<unsigned int, unsigned int> self_it_bounds = 
@@ -47,14 +73,16 @@ bool Loop::isSubloopOf(Loop* l)
         other_it_bounds.first = 0;
     }
  
-    /*
-    std::cout << "Self reps: " << this->getIterations() << std::endl;
+    std::cout << "Self reps: " << this->getIterations() << " - ";
     std::cout << "Self bound: [" << self_it_bounds.first << "," 
         << self_it_bounds.second << "]" << std::endl;
-    std::cout << "Other reps: " << l->getIterations() << std::endl;
+    std::cout << "Other reps: " << l->getIterations() << " - ";
     std::cout << "Other bound: [" << other_it_bounds.first << "," 
         << other_it_bounds.second << "]" << std::endl;
-    */
+    bool result = self_it_bounds.first > other_it_bounds.first 
+        and self_it_bounds.second < other_it_bounds.second;
+    std::cout << "RESULT: " << result << std::endl;
+    
 
     return self_it_bounds.first > other_it_bounds.first 
         and self_it_bounds.second < other_it_bounds.second;
@@ -110,6 +138,7 @@ bool Loop::isAliased(std::vector<ReducedMPICall*> mpi_calls, unsigned int deph)
 
 void Loop::superloopAnalysis()
 {
+    return;
     // Only if it is an aliased loop
     if (this->aliased_loops.size() == 0)
         return;
@@ -227,7 +256,7 @@ void LoopsIdentification::aliasingAnalysis()
             aliased_loops.insert(aliased_loops.begin(), 
                     newloops.begin(), newloops.end());
 
-            it = this->result->erase(it); // peligroso, no?
+            it = this->result->erase(it);
         }
         else
             ++it;

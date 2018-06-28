@@ -50,6 +50,7 @@ void TopLevelLoop::merge()
         }
         it_from++;
     }
+    // TODO : Append all subloops that have not been merged with anybody
     this->superloop = this->loops.back();
 }
 

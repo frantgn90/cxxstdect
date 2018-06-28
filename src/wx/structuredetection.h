@@ -24,8 +24,10 @@
 #include "wx/statline.h"
 #include "wx/splitter.h"
 ////@end includes
-
 #include "wx/dataview.h"
+#include "wx/listctrl.h"
+#include <UIParaverTraceConfig.h>
+
 /*!
  * Forward declarations
  */
@@ -57,17 +59,18 @@ class wxBoxSizer;
 #define ID_SPLITTERWINDOW 10002
 #define ID_TREECTRL 10001
 #define ID_PANEL 10003
-#define ID_TEXTCTRL 10004
 #define ID_CHECKBOX 10007
 #define ID_TEXTCTRL1 10008
+#define ID_COMBOCTRL 10022
+#define ID_TEXTCTRL 10004
 #define ID_BUTTON 10009
 #define ID_PANEL1 10015
-#define ID_PANEL2 10016
 #define ID_PANEL3 10017
+#define ID_PANEL2 10016
 #define SYMBOL_STRUCTUREDETECTION_STYLE wxCAPTION|wxRESIZE_BORDER|wxSYSTEM_MENU|wxCLOSE_BOX
 #define SYMBOL_STRUCTUREDETECTION_TITLE _("Structure detection")
 #define SYMBOL_STRUCTUREDETECTION_IDNAME ID_STRUCTUREDETECTION
-#define SYMBOL_STRUCTUREDETECTION_SIZE wxSize(600, 500)
+#define SYMBOL_STRUCTUREDETECTION_SIZE wxSize(650, 500)
 #define SYMBOL_STRUCTUREDETECTION_POSITION wxDefaultPosition
 ////@end control identifiers
 
@@ -83,7 +86,7 @@ class Structuredetection: public wxFrame
 private:
     wxDataViewItemArray last_level_items;
     std::string tracefile;
-    double filter_lbound = 0.01;
+    double filter_lbound = 0.1;
     double eps = 0.1;
     size_t minPts = 1;
     double eps_tl = 0.1;
@@ -131,6 +134,9 @@ public:
     /// wxEVT_COMMAND_CHECKBOX_CLICKED event handler for ID_CHECKBOX
     void OnShowComputationsCheckboxClick( wxCommandEvent& event );
 
+    /// wxEVT_COMMAND_COMBOBOX_SELECTED event handler for ID_COMBOCTRL
+    void OnHWCComboctrlSelected( wxCommandEvent& event );
+
     /// wxEVT_COMMAND_BUTTON_CLICKED event handler for ID_BUTTON
     void OnFilterButtonClick( wxCommandEvent& event );
 
@@ -154,19 +160,22 @@ public:
     wxSplitterWindow* main_hsplit;
     wxSplitterWindow* main_split;
     wxDataViewCtrl* dataviewtree_pseudocode;
-    wxPanel* config_panel;
-    wxTextCtrl* rank_filter_text;
+    wxScrolledWindow* config_panel;
     wxTextCtrl* burst_threshold_text;
+    wxComboBox* hwc_combobox;
+    wxTextCtrl* rank_filter_text;
     wxPanel* info_panel;
-    wxPanel* legend_panel;
-    wxBoxSizer* legend_panel_sizer;
     wxStaticText* general_nphases_label;
     wxStaticText* general_deltas_label;
     wxPanel* callpath_panel;
     wxBoxSizer* selected_item_callpath;
+    wxPanel* legend_panel;
+    wxBoxSizer* legend_panel_sizer;
 ////@end Structuredetection member variables
 //
 //
+
+    libparaver::UIParaverTraceConfig trace_semantic;
     wxDataViewCtrl* itemControl3;
     void SetAssociateModel(wxDataViewModel* model);
     void setGeneralInfo(unsigned int nphases, std::vector<unsigned int> deltas);

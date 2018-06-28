@@ -95,10 +95,17 @@ struct pA_comp {
 struct pA_comp_tl {
     bool operator() (const GUILoop* l, const GUILoop* r) const { 
         int N = std::min(l->getNCallers(), r->getNCallers());
+
+        std::vector<Caller> my_callers = l->getCallers();
+        std::vector<Caller> its_callers = r->getCallers();
+
+        std::reverse(my_callers.begin(), my_callers.end());
+        std::reverse(its_callers.begin(), its_callers.end());
+
         for (int i=0; i<N; ++i)
         {
-            Caller my = l->getCallerAt(i);
-            Caller its = r->getCallerAt(i);
+            Caller my = my_callers[i];
+            Caller its = its_callers[i];
 
             if (std::get<2>(my) != std::get<2>(its)) // different file
                 return false; // it is random...
@@ -204,12 +211,22 @@ void wxPseudocode::parseChilds(wxPseudocodeItem* parent, GUILoop* loop)
             bool found = false;
             for (auto it2 : color_map)
             {
-                if (std::equal(it2.first->begin(), it2.first->end(), 
-                            mpicall->getTasks()->begin()))
+                auto first_color_v = it2.first;
+                auto second_color_v = mpicall->getTasks();
+
+                if (first_color_v->size() != second_color_v->size())
+                    continue;
+                else
                 {
-                    color_val = it2.second;
-                    found = true;
-                    break;
+                    std::sort(first_color_v->begin(), first_color_v->end());
+                    std::sort(second_color_v->begin(), second_color_v->end());
+                    if (std::equal(first_color_v->begin(), first_color_v->end(), 
+                                second_color_v->begin()))
+                    {
+                        color_val = it2.second;
+                        found = true;
+                        break;
+                    }
                 }
             }
             
@@ -311,7 +328,10 @@ unsigned int wxPseudocode::GetChildren(const wxDataViewItem& item,
                     if (std::find(tasks->begin(), tasks->end(), rank) 
                             != tasks->end())
                     {
-                        if (!it->IsComputation())
+                        if (!it->IsComputation() or (
+                                it->IsComputation() and 
+                                this->show_computations and 
+                                this->computation_thresshold <= it->GetDuration()))
                         {
                             count++;
                             childs.Add(wxDataViewItem(it));
@@ -321,7 +341,10 @@ unsigned int wxPseudocode::GetChildren(const wxDataViewItem& item,
             }
             else
             {
-                if (!it->IsComputation())
+                if (!it->IsComputation() or (
+                        it->IsComputation() and 
+                        this->show_computations and 
+                        this->computation_thresshold <= it->GetDuration()))
                 {
                     count++;
                     childs.Add(wxDataViewItem(it));
@@ -358,7 +381,7 @@ void wxPseudocode::GetValue(wxVariant &var, const wxDataViewItem& item,
             var = (long int)pitem->GetMsgSize();
             break;
         case 3:
-            var = pitem->GetIPC();
+            var = pitem->GetHWC(this->hwc_column_type);
             break;
     }
     //assert(false);

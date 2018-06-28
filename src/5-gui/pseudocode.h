@@ -24,6 +24,8 @@ class GUIRepresentation
             : trace_semantic(trace_semantic) {};
         Caller getCallerAt(unsigned int i) const
             { return this->callpath_str[i]; }
+        std::vector<Caller> getCallers() const
+            { return this->callpath_str; }
         unsigned int getNCallers() const
             { return this->callpath_str.size(); }
         std::vector<Caller> getCallpath()
@@ -38,6 +40,8 @@ class GUIRepresentation
             { return 0.0; }
         virtual float getIPC()
             { return 0.0; }
+        virtual float getHWC(std::string hwc_name)
+            { return 0; }
         virtual bool isLoop()
             { return false; }
         virtual std::vector<unsigned int>* getTasks()
@@ -62,6 +66,15 @@ class GUIReducedCPUBurst : public GUIRepresentation
             { return this->cpuburst->getTasks(); }
         virtual unsigned int getDuration()
             { return this->cpuburst->getDuration(); }
+        virtual float getHWC(std::string hwc_name)
+        {
+            for (auto it : this->hwc)
+            {
+                if (it.first == "hwc_name")
+                    return (float)it.second;
+            }
+            return 0;
+        }
     private:
         ReducedCPUBurst *cpuburst;
         std::vector<std::pair<std::string, unsigned int>> hwc;
@@ -206,6 +219,8 @@ class wxPseudocodeItem
             { return this->msg_size; }
         float GetIPC()
             { return this->ipc; }
+        float GetHWC(std::string hwc_name)
+            { return this->actual_statement->getHWC(hwc_name); }
         bool IsContainer()
             { return this->ordered_childs.size() > 0; }
         bool IsLoop()
@@ -248,6 +263,13 @@ class wxPseudocode : public wxDataViewModel
             { return this->color_map; }
         void setRanksFilter(std::vector<unsigned int> ranks)
             { this->ranks_filter = ranks; }
+        void showComputations(bool show)
+            { this->show_computations = show; }
+        void setComputationsThresshold(unsigned int th)
+            { this->computation_thresshold = th; }
+        void setHWCColumnType(std::string hwc_column_type)
+            { this->hwc_column_type = hwc_column_type; }
+
     private:
         std::vector<wxPseudocodeItem*> roots;
         std::vector<wxPseudocodeItem*> items;
@@ -258,6 +280,7 @@ class wxPseudocode : public wxDataViewModel
         std::vector<unsigned int> ranks_filter;
         bool show_computations;
         unsigned int computation_thresshold;
+        std::string hwc_column_type;
 };
 
 class Pseudocode : public PipelineStage<TopLevelLoopVector, wxPseudocode>
