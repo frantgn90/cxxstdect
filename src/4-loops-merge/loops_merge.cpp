@@ -62,6 +62,55 @@ std::vector<unsigned int> LoopsMerge::getDeltas()
     return result;
 }
 
+void LoopsMerge::preparePlot(std::vector<Loop>* loops,
+        arma::mat centroids)
+{
+    char datafile[L_tmpnam] = "gnudata.txt";
+    char plotscript[L_tmpnam] = "gnuplot.gc";
+
+    char * tmpname = tmpnam(datafile);
+    char * gnuplotname = tmpnam(plotscript);
+
+    // Generate data file
+    std::ofstream tmpfile;
+    tmpfile.open(tmpname);
+
+    for (Loop loop : *loops)
+        for (ReducedMPICall *mpicall : loop.getMpiCalls())
+        {
+            unsigned int reps = mpicall->getRepetitions();
+            unsigned int iit = mpicall->getInterRepTime();
+
+            tmpfile << reps << "\t" << iit << "\t" << loop.getId() << "\n";
+        }
+    tmpfile.close();
+
+    // Generate gnuplot script
+    std::ofstream gnuplot;
+    gnuplot.open(gnuplotname);
+    gnuplot << "set title \"Detected loops by clustering\"\n"
+            << "set nokey\n"
+            << "set grid xtics, ytics\n"
+            << "set pointsize 3\n"
+            << "set xlabel \"Repetitions\"\n"
+            << "set ylabel \"Iterations time\"\n"
+            << "set offsets graph 0.5, 0.5, 0.5, 0.5\n"
+            << "set palette maxcolors " << loops->size() << "\n"
+            << "plot \"" << tmpname << "\" with points palette pointtype 3";
+
+    for (auto r : centroids)
+    {
+        gnuplot << ", (" << this->texe << "*" << r << ")/x";
+    }
+
+    gnuplot << "\npause -1\n";
+
+    gnuplot.close();
+
+    this->clustering_data_file = tmpname;
+    this->gnuplot_script_file = gnuplotname;
+}
+
 void LoopsMerge::actual_run(LoopVector *input)
 {
     // First step is to classify loops by their delta
@@ -76,14 +125,13 @@ void LoopsMerge::actual_run(LoopVector *input)
 
     //data = arma::normalise(data);
     size_t nclusters = dbscan.Cluster(data, assignements, centroids);
+    this->preparePlot(input, centroids);
 
-    /****/
     //std::cout << "Loops: " << input->size() << std::endl;
     //std::cout << "Top level loops: " << nclusters << std::endl;
     //data.print("DATA: ");
     //assignements.print("ASSIGN: ");
     //centroids.print("CENTR: ");
-    /****/
 
     // Create the top level loops objects
     this->nphases = nclusters;

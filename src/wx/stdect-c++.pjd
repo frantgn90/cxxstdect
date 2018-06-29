@@ -789,6 +789,7 @@
             </document>
             <document>
               <string name="proxy-type">"wbToolBarButtonProxy"</string>
+              <string name="event-handler-0">"wxEVT_COMMAND_MENU_SELECTED|OnShowClusteringButtonClick|NONE||Structuredetection"</string>
               <string name="filename">""</string>
               <string name="icon-name">"menuitem"</string>
               <long name="is-transient">0</long>

@@ -91,6 +91,7 @@ private:
     size_t minPts = 1;
     double eps_tl = 0.1;
     size_t minPts_tl = 1;
+    std::string gnuplot_script;
 
 public:
     /// Constructors
@@ -124,6 +125,9 @@ public:
 
     /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL1
     void OnInfoButtonClick( wxCommandEvent& event );
+
+    /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL5
+    void OnShowClusteringButtonClick( wxCommandEvent& event );
 
     /// wxEVT_COMMAND_MENU_SELECTED event handler for wxID_EXIT
     void OnExitClick( wxCommandEvent& event );

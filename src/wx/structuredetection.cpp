@@ -67,6 +67,7 @@ BEGIN_EVENT_TABLE( Structuredetection, wxFrame )
     EVT_MENU( ID_TOOL3, Structuredetection::OnFoldButtonClick )
     EVT_MENU( ID_TOOL, Structuredetection::OnToolClick )
     EVT_MENU( ID_TOOL1, Structuredetection::OnInfoButtonClick )
+    EVT_MENU( ID_TOOL5, Structuredetection::OnShowClusteringButtonClick )
     EVT_MENU( wxID_EXIT, Structuredetection::OnExitClick )
     EVT_UPDATE_UI( ID_TREECTRL, Structuredetection::OnTreectrlUpdate )
     EVT_CHECKBOX( ID_CHECKBOX, Structuredetection::OnShowComputationsCheckboxClick )
@@ -784,7 +785,7 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
     NPTrace parser;
     Reducer reducer(trace_info.texe, filter_lbound, trace_info.ntasks);
     LoopsIdentification loops_id(eps, minPts);
-    LoopsMerge loops_merge(eps_tl, minPts_tl);
+    LoopsMerge loops_merge(eps_tl, minPts_tl, trace_info.texe);
     Pseudocode pseudocode(&trace_semantic);
 
     // Connect them
@@ -797,6 +798,7 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
     parser.setInput(&tracefile);
     parser.run();
 
+    this->gnuplot_script = loops_merge.getGNUPlotScript();
     wxDataViewModel* model = (wxDataViewModel*)pseudocode.getResult();
     this->SetAssociateModel(model);
     static_cast<wxPseudocode*>(model)->setHWCColumnType(
@@ -825,5 +827,23 @@ void Structuredetection::OnHWCComboctrlSelected( wxCommandEvent& event )
     //wxPseudocode* mm = static_cast<wxPseudocode*>(dataviewtree_pseudocode
     //        ->GetModel());
     //mm->setHWCColumnType(hwc_name);
+}
+
+
+/*
+ * wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL5
+ */
+
+void Structuredetection::OnShowClusteringButtonClick( wxCommandEvent& event )
+{
+    pid_t pid = fork();
+    if (pid == 0)
+    {
+        execl("/usr/bin/gnuplot", "gnuplot", 
+                this->gnuplot_script.c_str(), (char*)0);
+        std::cout << "Error on execl" << std::endl;
+        exit(1);
+    }
+    std::cout << "gnuplot " << this->gnuplot_script << std::endl;
 }
 

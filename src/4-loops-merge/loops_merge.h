@@ -47,19 +47,26 @@ typedef std::vector<TopLevelLoop> TopLevelLoopVector;
 class LoopsMerge : public PipelineStage<LoopVector, TopLevelLoopVector>
 {
     public:
-        LoopsMerge(double eps, size_t minPts)
+        LoopsMerge(double eps, size_t minPts, unsigned int texe)
             : PipelineStage<LoopVector, TopLevelLoopVector>(
                     "Loops merge", false, false)
             , eps(eps)
-            , minPts(minPts) {};
+            , minPts(minPts)
+            , texe(texe) {};
         unsigned int getNPhases()
             { return this->nphases; }
         std::vector<unsigned int> getDeltas();
+        std::string getGNUPlotScript()
+            { return this->gnuplot_script_file; }
     private:
         unsigned int nphases;
         double eps;
         size_t minPts;
+        unsigned int texe;
         void actual_run(LoopVector *input);
+        void preparePlot(std::vector<Loop>* loops, arma::mat centroids);
+        std::string clustering_data_file;
+        std::string gnuplot_script_file;
 };
 
 #endif /* !LOOPS_MERGE_H */
