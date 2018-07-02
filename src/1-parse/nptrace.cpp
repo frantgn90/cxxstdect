@@ -19,16 +19,22 @@ void NPTrace::actual_run(std::string *trace_file)
     
         std::string header;
         this->file->getline(header); // dummy
+        this->progress_reporter->setMax(
+                TraceStream::getTraceFileSize(*trace_file));
+        this->progress_reporter->addProgress(header.size());
         this->init = true;
+
     }
 
     std::string line;
     this->file->getline(line);
+    this->progress_reporter->addProgress(line.size());
 
     this->result = NPRecord::build(line);
     while (!result and !this->file->eof())
     {
         this->file->getline(line);
+        this->progress_reporter->addProgress(line.size());
         this->result = NPRecord::build(line);
     }
 

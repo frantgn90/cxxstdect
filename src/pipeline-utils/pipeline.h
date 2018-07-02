@@ -18,6 +18,19 @@
 #include <execinfo.h>
 #include <memory>
 
+class ProgressReporter 
+{
+    public:
+        virtual void setMax(unsigned int m) = 0;
+        virtual void addProgress(unsigned int p) = 0;
+};
+
+class LogReporter
+{
+    public:
+        virtual void addMessage(std::string msg) = 0;
+};
+
 class PipelineStageGeneral
 {
     public:
@@ -29,6 +42,8 @@ class PipelineStageGeneral
             , phasename(name) 
             , next_stage(NULL)
             , msg_printed(false)
+            , progress_reporter(NULL)
+            , log_reporter(NULL)
         {
         };
         unsigned int getDuration() 
@@ -41,6 +56,10 @@ class PipelineStageGeneral
         }
         virtual void run() {};
         virtual void setInput(void *) {};
+        void setProgressReporter(ProgressReporter* pr)
+            { this->progress_reporter = pr; }
+        void setLogReporter(LogReporter* lr)
+            { this->log_reporter = lr; }
     protected:
         bool msg_printed;
         bool prev_done;
@@ -50,6 +69,8 @@ class PipelineStageGeneral
         double duration;
         std::string phasename;
         PipelineStageGeneral* next_stage;
+        ProgressReporter* progress_reporter;
+        LogReporter* log_reporter;
 };
 
 template <class T1,class T2>
@@ -73,7 +94,10 @@ class PipelineStage : public PipelineStageGeneral
                     msg += "[msend]";
                 if (this->multirecv)
                     msg += "[mrecv]";
-                std::cout << msg << std::endl;
+                if (!this->log_reporter)
+                    std::cout << msg << std::endl;
+                else
+                    this->log_reporter->addMessage(msg);
                 msg_printed = true;
             }
             boost::timer t;
@@ -133,8 +157,11 @@ class PipelineStage : public PipelineStageGeneral
             }
             catch(...)
             {
-                std::cout << this->phasename << ": Default exception catched!" 
-                    << std::endl;
+                std::string msg(this->phasename+": Default exception catched!");
+                if (!this->log_reporter)
+                    std::cout << msg << std::endl;
+                else
+                    this->log_reporter->addMessage(msg);
                 backtrace();
                 exit(1);
             }

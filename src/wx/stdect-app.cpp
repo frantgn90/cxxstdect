@@ -136,6 +136,7 @@ bool StdectApp::OnInit()
         return 1;
     }
 
+    mainWindow->Update();
     mainWindow->run(this->tracefile, paraver_pcf, 
             this->eps, this->minPts,
             this->eps_tl, this->minPts_tl,

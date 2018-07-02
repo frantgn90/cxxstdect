@@ -12,6 +12,7 @@
 // Some utils
 #include <TraceHeader.h>
 
+
 // Include workflow phases
 #include <pipeline.h>
 #include <nptrace.h>
@@ -35,6 +36,8 @@
 #include "wx/dataview.h"
 ////@end includes
 
+// Loading dialog
+#include "loadingdialog.h"
 #include "structuredetection.h"
 
 ////@begin XPM images
@@ -586,7 +589,6 @@ void Structuredetection::addLegendItem(std::vector<unsigned int>* ranks,
 
     legend_panel_sizer->Add(item_color, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
     legend_panel_sizer->Add(new_legend_item, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-    this->legend_panel_sizer->Layout();
 }
 
 void Structuredetection::OnItemSelection(wxDataViewEvent& event)
@@ -780,6 +782,14 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
     this->hwc_combobox->SetSelection(0);
 
     TraceHeader trace_info(tracefile);
+    
+    loadingDialog * loading_dialog = new loadingDialog(NULL);
+    loading_dialog->Show(true);
+    loading_dialog->Update();
+
+    // Disable all windows unless loading_dialog. It reenable windows after
+    // deletion of the object (at this function return).
+    wxWindowDisabler disableall(loading_dialog);
 
     // Declare all phases
     NPTrace parser;
@@ -787,6 +797,13 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
     LoopsIdentification loops_id(eps, minPts);
     LoopsMerge loops_merge(eps_tl, minPts_tl, trace_info.texe);
     Pseudocode pseudocode(&trace_semantic);
+
+    parser.setProgressReporter(loading_dialog);
+    parser.setLogReporter(loading_dialog);
+    reducer.setLogReporter(loading_dialog);
+    loops_id.setLogReporter(loading_dialog);
+    loops_merge.setLogReporter(loading_dialog);
+    pseudocode.setLogReporter(loading_dialog);
 
     // Connect them
     parser.connect(&reducer);
@@ -804,7 +821,6 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
     static_cast<wxPseudocode*>(model)->setHWCColumnType(
             std::string(this->hwc_combobox->GetString(0)));
 
-
     std::vector<std::pair<std::vector<unsigned int>*, std::string>> color_map;
     color_map = pseudocode.getResult()->getColormap();
 
@@ -813,6 +829,12 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
         this->addLegendItem(legend_item.first, legend_item.second);
 
     this->setGeneralInfo(loops_merge.getNPhases(), loops_merge.getDeltas());
+
+    loading_dialog->WellDone();
+    loading_dialog->ShowModal(); // block the execution
+
+    loading_dialog->Show(false);
+    loading_dialog->Destroy();
 }
 
 

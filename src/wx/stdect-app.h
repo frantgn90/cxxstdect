@@ -68,6 +68,7 @@ public:
 
 ////@begin StdectApp member variables
     std::string tracefile;
+    std::string paraver_pcf;
     double filter_lbound = 0.1;
     double eps = 0.1;
     size_t minPts = 1;
