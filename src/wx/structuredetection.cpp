@@ -784,6 +784,7 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
     TraceHeader trace_info(tracefile);
     
     loadingDialog * loading_dialog = new loadingDialog(NULL);
+    loading_dialog->setTraceName(tracefile);
     loading_dialog->Show(true);
     loading_dialog->Update();
 
@@ -844,11 +845,11 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
 
 void Structuredetection::OnHWCComboctrlSelected( wxCommandEvent& event )
 {
-    //std::string hwc_name(event.GetString());
+    std::string hwc_name(event.GetString());
 
-    //wxPseudocode* mm = static_cast<wxPseudocode*>(dataviewtree_pseudocode
-    //        ->GetModel());
-    //mm->setHWCColumnType(hwc_name);
+    wxPseudocode* mm = static_cast<wxPseudocode*>(dataviewtree_pseudocode
+            ->GetModel());
+    mm->setHWCColumnType(hwc_name);
 }
 
 

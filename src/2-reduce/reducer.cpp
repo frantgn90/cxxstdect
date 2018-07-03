@@ -27,6 +27,7 @@ void Reducer::open_mpi(NPEvent *event)
     mpic.setMPI(event->getEvents(MPI_REGEX));
     mpic.setPath(event->getEvents(LIN_REGEX));
     mpic.setCall(event->getEvents(CAL_REGEX));
+
     mpic.setPreviousCPUBurst(this->last_cpu_burst[TID(event)]);
 
     this->last_mpicall[TID(event)] = mpic;
@@ -85,6 +86,22 @@ void Reducer::actual_run(NPRecord *record)
 void Reducer::process(NPEvent *event)
 {
     int i;
+    // First look for hwc
+    for (auto e : event->getEvents("420000"))
+    {
+        this->hwc_event(TID(event), e);
+    }
+
+    // Then loop for mpi events
+    for (auto e : event->getEvents("5000000"))
+    {
+        if (e.second == "0")
+            this->close_mpi(event);
+        else
+            this->open_mpi(event);
+    }
+
+    /*
     if ((i = event->existEvent(MPI_REGEX)) != -1)
     {
         if (event->getEvent(i).second == "0")
@@ -96,6 +113,7 @@ void Reducer::process(NPEvent *event)
     {
         this->hwc_event(TID(event),event->getEvent(i));
     }
+    */
 }
 
 void Reducer::process(NPComm *comm)

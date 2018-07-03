@@ -27,7 +27,7 @@ class NPRecord
         static NPRecord *build(const std::string &line);
         unsigned int getTimestamp() { return this->timestamp; };
         unsigned int getTask() { return this->task_id; };
-        unsigned int getType() { return this->type; };
+        unsigned int getType() const { return this->type; };
     protected:
         unsigned int type;
         unsigned int timestamp;
@@ -43,15 +43,13 @@ class NPEvent : public NPRecord
     public:
         NPEvent(const std::string line);
         //~NPEvent();
-        int existEvent(const std::string type);
+        int existEvent(const std::string type) const;
         std::pair<std::string, std::string> getEvent(int i);
         unsigned int getNEvents() { return this->type.size(); };
         std::vector<std::pair<std::string,std::string>> 
             getEvents(const std::string type);
         std::vector<std::pair<std::string,std::string>> 
             getEvents();
-
-        
     private:
         std::vector<std::string> type;
         std::vector<std::string> value;
@@ -85,11 +83,11 @@ class NPStat : public NPRecord
 {
     public:
         NPStat(const std::string line);
-        unsigned int getState()
+        unsigned int getState() const
             { return this->state; }
-        unsigned int getBeginTime()
+        unsigned int getBeginTime() const
             { return this->begin_time; }
-        unsigned int getEndTime()
+        unsigned int getEndTime() const
             { return this->end_time; }
     private:
         unsigned int begin_time;

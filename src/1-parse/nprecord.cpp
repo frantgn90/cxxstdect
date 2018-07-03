@@ -56,7 +56,7 @@ std::pair<std::string, std::string> NPEvent::getEvent(int i)
     return res;
 }
 
-int NPEvent::existEvent(const std::string type)
+int NPEvent::existEvent(const std::string type) const
 {
     for (int i=0; i<this->type.size(); ++i)
     {

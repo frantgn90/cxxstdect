@@ -70,7 +70,7 @@ class GUIReducedCPUBurst : public GUIRepresentation
         {
             for (auto it : this->hwc)
             {
-                if (it.first == "hwc_name")
+                if (it.first == hwc_name)
                     return (float)it.second;
             }
             return 0;

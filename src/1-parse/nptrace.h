@@ -20,12 +20,19 @@ class NPTrace : public PipelineStage<std::string, NPRecord>
     public:
         NPTrace() 
             : PipelineStage<std::string, NPRecord>("Parsing", false, true)
-            , init(false) {};
+            , init(false) 
+            , first_record_after_reorder(NULL) {};
     private:
         void actual_run(std::string *trace_file);
         void readHeader(std::string header);
+        NPRecord* getNextRecord();
+        void printReorderBuffer();
+
         TraceStream *file;
         bool init;
+        // just reorder records with same timestamp
+        std::vector<NPRecord*> reorder_buffer; 
+        NPRecord *first_record_after_reorder;
 };
 
 #endif /* !TRACE_H */
