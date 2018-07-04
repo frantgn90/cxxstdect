@@ -70,6 +70,7 @@ BEGIN_EVENT_TABLE( Structuredetection, wxFrame )
     EVT_MENU( ID_TOOL3, Structuredetection::OnFoldButtonClick )
     EVT_MENU( ID_TOOL, Structuredetection::OnToolClick )
     EVT_MENU( ID_TOOL1, Structuredetection::OnInfoButtonClick )
+    EVT_MENU( ID_TOOL4, Structuredetection::OnShowParaverButtonClick )
     EVT_MENU( ID_TOOL5, Structuredetection::OnShowClusteringButtonClick )
     EVT_MENU( wxID_EXIT, Structuredetection::OnExitClick )
     EVT_UPDATE_UI( ID_TREECTRL, Structuredetection::OnTreectrlUpdate )
@@ -192,10 +193,10 @@ void Structuredetection::CreateControls()
     itemToolBar3->AddControl(itemStaticLine10);
     wxBitmap itemtool11Bitmap(itemFrame1->GetBitmapResource(wxT("../../imgs/timeline.xpm")));
     wxBitmap itemtool11BitmapDisabled;
-    itemToolBar3->AddTool(ID_TOOL4, _("Launch paraver"), itemtool11Bitmap, itemtool11BitmapDisabled, wxITEM_NORMAL, wxEmptyString, _("Launch paraver"));
+    itemToolBar3->AddTool(ID_TOOL4, _("Launch paraver"), itemtool11Bitmap, itemtool11BitmapDisabled, wxITEM_NORMAL, _("Launch paraver"), _("Launch paraver"));
     wxBitmap itemtool12Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/new_window.xpm")));
     wxBitmap itemtool12BitmapDisabled;
-    itemToolBar3->AddTool(ID_TOOL5, _("Show clustering"), itemtool12Bitmap, itemtool12BitmapDisabled, wxITEM_NORMAL, wxEmptyString, _("Show clustering"));
+    itemToolBar3->AddTool(ID_TOOL5, _("Show clustering"), itemtool12Bitmap, itemtool12BitmapDisabled, wxITEM_NORMAL, _("Show clustering"), _("Show clustering"));
     wxStaticLine* itemStaticLine13 = new wxStaticLine( itemToolBar3, wxID_STATIC, wxDefaultPosition, wxSize(-1, 20), wxLI_HORIZONTAL );
     itemToolBar3->AddControl(itemStaticLine13);
     wxBitmap itemtool14Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/delete.xpm")));
@@ -782,6 +783,7 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
     this->hwc_combobox->SetSelection(0);
 
     TraceHeader trace_info(tracefile);
+    paraver_interface = new ParaverInterface(tracefile, trace_info.texe);
     
     loadingDialog * loading_dialog = new loadingDialog(NULL);
     loading_dialog->setTraceName(tracefile);
@@ -868,5 +870,15 @@ void Structuredetection::OnShowClusteringButtonClick( wxCommandEvent& event )
         exit(1);
     }
     std::cout << "gnuplot " << this->gnuplot_script << std::endl;
+}
+
+
+/*
+ * wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL4
+ */
+
+void Structuredetection::OnShowParaverButtonClick( wxCommandEvent& event )
+{
+    this->paraver_interface->OpenTrace();
 }
 

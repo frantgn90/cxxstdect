@@ -27,6 +27,7 @@
 #include "wx/dataview.h"
 #include "wx/listctrl.h"
 #include <UIParaverTraceConfig.h>
+#include <ParaverInterface.h>
 
 /*!
  * Forward declarations
@@ -86,6 +87,7 @@ class Structuredetection: public wxFrame
 private:
     wxDataViewItemArray last_level_items;
     std::string tracefile;
+    ParaverInterface *paraver_interface;
     double filter_lbound = 0.1;
     double eps = 0.1;
     size_t minPts = 1;
@@ -125,6 +127,9 @@ public:
 
     /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL1
     void OnInfoButtonClick( wxCommandEvent& event );
+
+    /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL4
+    void OnShowParaverButtonClick( wxCommandEvent& event );
 
     /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL5
     void OnShowClusteringButtonClick( wxCommandEvent& event );

@@ -768,6 +768,7 @@
             </document>
             <document>
               <string name="proxy-type">"wbToolBarButtonProxy"</string>
+              <string name="event-handler-0">"wxEVT_COMMAND_MENU_SELECTED|OnShowParaverButtonClick|NONE||Structuredetection"</string>
               <string name="filename">""</string>
               <string name="icon-name">"menuitem"</string>
               <long name="is-transient">0</long>
@@ -782,7 +783,7 @@
               <string name="proxy-Kind">"Normal"</string>
               <string name="proxy-Label">"Launch paraver"</string>
               <string name="proxy-Platform">"&lt;Any platform&gt;"</string>
-              <string name="proxy-Tooltip">""</string>
+              <string name="proxy-Tooltip">"Launch paraver"</string>
               <string name="title">"Launch paraver: ID_TOOL4"</string>
               <long name="title-mode">0</long>
               <string name="type">"dialog-control-document"</string>
@@ -804,7 +805,7 @@
               <string name="proxy-Kind">"Normal"</string>
               <string name="proxy-Label">"Show clustering"</string>
               <string name="proxy-Platform">"&lt;Any platform&gt;"</string>
-              <string name="proxy-Tooltip">""</string>
+              <string name="proxy-Tooltip">"Show clustering"</string>
               <string name="title">"Show clustering: ID_TOOL5"</string>
               <long name="title-mode">0</long>
               <string name="type">"dialog-control-document"</string>
@@ -895,21 +896,13 @@
             <long name="is-transient">0</long>
             <long name="locked">0</long>
             <long name="owns-file">1</long>
-            <string name="proxy-AlignH">"Centre"</string>
-            <string name="proxy-AlignV">"Centre"</string>
-            <long name="proxy-Border">5</long>
             <string name="proxy-Member variable name">""</string>
             <string name="proxy-Orientation">"Vertical"</string>
             <string name="proxy-Platform">"&lt;Any platform&gt;"</string>
-            <long name="proxy-Stretch factor">0</long>
             <bool name="proxy-wxADJUST_MINSIZE">0</bool>
-            <bool name="proxy-wxBOTTOM">1</bool>
             <bool name="proxy-wxFIXED_MINSIZE">0</bool>
-            <bool name="proxy-wxLEFT">1</bool>
             <bool name="proxy-wxRESERVE_SPACE_EVEN_IF_HIDDEN">0</bool>
-            <bool name="proxy-wxRIGHT">1</bool>
             <bool name="proxy-wxSHAPED">0</bool>
-            <bool name="proxy-wxTOP">1</bool>
             <string name="title">"wxBoxSizer V"</string>
             <long name="title-mode">0</long>
             <string name="type">"dialog-control-document"</string>
