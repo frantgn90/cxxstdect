@@ -123,9 +123,10 @@ class GUILoop : public GUIRepresentation
 
             return "Loop " + std::to_string(iters) + " iterations"; 
         }
-
         virtual bool isLoop()
             { return true; }
+        Loop* getLoopObj()
+            { return this->loop; }
     private:
         std::vector<GUIRepresentation*> statements;
         Loop* loop;

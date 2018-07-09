@@ -26,6 +26,7 @@
 ////@end includes
 #include "wx/dataview.h"
 #include "wx/listctrl.h"
+#include "wx/propgrid/propgrid.h"
 #include <UIParaverTraceConfig.h>
 #include <ParaverInterface.h>
 
@@ -37,6 +38,7 @@
 class wxStatusBar;
 class wxSplitterWindow;
 class wxDataViewCtrl;
+class wxPropertyGrid;
 class wxBoxSizer;
 ////@end forward declarations
 
@@ -53,28 +55,100 @@ class wxBoxSizer;
 #define ID_TOOL3 10013
 #define ID_TOOL 10010
 #define ID_TOOL1 10011
-#define ID_TOOL4 10018
 #define ID_TOOL5 10019
 #define ID_TEXTCTRL2 10020
 #define ID_SASHWINDOW 10014
 #define ID_SPLITTERWINDOW 10002
 #define ID_TREECTRL 10001
+#define ID_PROPGRID 10023
+#define ID_PANEL1 10015
 #define ID_PANEL 10003
 #define ID_CHECKBOX 10007
 #define ID_TEXTCTRL1 10008
 #define ID_COMBOCTRL 10022
 #define ID_TEXTCTRL 10004
 #define ID_BUTTON 10009
-#define ID_PANEL1 10015
+#define ID_SLIDER 10024
+#define ID_BUTTON1 10025
+#define ID_BUTTON2 10026
+#define ID_CHECKBOX1 10027
+#define ID_BITMAPBUTTON 10028
 #define ID_PANEL3 10017
 #define ID_PANEL2 10016
 #define SYMBOL_STRUCTUREDETECTION_STYLE wxCAPTION|wxRESIZE_BORDER|wxSYSTEM_MENU|wxCLOSE_BOX
 #define SYMBOL_STRUCTUREDETECTION_TITLE _("Structure detection")
 #define SYMBOL_STRUCTUREDETECTION_IDNAME ID_STRUCTUREDETECTION
-#define SYMBOL_STRUCTUREDETECTION_SIZE wxSize(650, 500)
+#define SYMBOL_STRUCTUREDETECTION_SIZE wxSize(800, 500)
 #define SYMBOL_STRUCTUREDETECTION_POSITION wxDefaultPosition
 ////@end control identifiers
 
+#define CONFIG_LABEL_MPI_FILTER "MPI Rank Filter"
+#define CONFIG_LABEL_TIME_UNITS "Time units"
+#define CONFIG_LABEL_SIZE_UNITS "Size units"
+#define CONFIG_LABEL_CPU_BURSTS "CPU Bursts"
+#define CONFIG_LABEL_CPU_LOWBND "Burst low-bound"
+#define CONFIG_LABEL_CPU_HWC "Burst HWC"
+
+typedef std::tuple<
+    std::string,        // type
+    std::string,        // label
+    void(*)(void*),     // getter
+    void(*)(void*)      // setter
+    > ConfigField;
+
+/*
+template<class T>
+class ItemConfiguration
+{
+    public:
+        ItemConfiguration(std::string label, (T)(*getter)(void), 
+                (void)(*setter)(T))
+            : label(label)
+            , default(default)
+            , cb(f)
+        {
+            this->generatePropGridItem();
+        }
+        setValue(T value)
+            { this->setter(value); }
+        T getValue()
+            { this->getter(); }
+        wxPGProperty* generatePropGridItem<bool>()
+        {
+            return new wxBoolProperty(this->label, wxPG_LABEL, this->default);
+        }
+        wxPGProperty* generatePropGridItem<int>()
+        {
+            return new wxIntProperty(this->label, wxPG_LABEL, this->default);
+        }
+        wxPGProperty* generatePropGridItem<float>()
+        {
+            return new wxFloatProperty(this->label, wxPG_LABEL, this->default);
+        }
+        wxPGProperty* generatePropGridItem<std::string>()
+        {
+            return new wxLongStringProperty(this->label, wxPG_LABEL, this->default);
+        }
+        wxPGProperty* generatePropGridItem<std::vector<std::string>>()
+        {
+            return new wxArrayStringProperty(this->label, wxPG_LABEL, this->default);
+        }
+    private:
+        std::string label;
+        std::string type;
+        T default;
+        confCallBack cb;
+        (T)(*getter)(void);
+        (void)(*setter)(T);
+
+};
+
+class Configuration 
+{
+    public:
+        newConfGroup(std::string name, std::vector<ConfigField> fields)
+};
+*/
 
 /*!
  * Structuredetection class declaration
@@ -94,6 +168,8 @@ private:
     double eps_tl = 0.1;
     size_t minPts_tl = 1;
     std::string gnuplot_script;
+    void* selected_loop = NULL;
+    bool timeline_already_opened = false;
 
 public:
     /// Constructors
@@ -128,9 +204,6 @@ public:
     /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL1
     void OnInfoButtonClick( wxCommandEvent& event );
 
-    /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL4
-    void OnShowParaverButtonClick( wxCommandEvent& event );
-
     /// wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL5
     void OnShowClusteringButtonClick( wxCommandEvent& event );
 
@@ -149,8 +222,15 @@ public:
     /// wxEVT_COMMAND_BUTTON_CLICKED event handler for ID_BUTTON
     void OnFilterButtonClick( wxCommandEvent& event );
 
+    /// wxEVT_COMMAND_CHECKBOX_CLICKED event handler for ID_CHECKBOX1
+    void OnSpecificIterationCheckboxClick( wxCommandEvent& event );
+
+    /// wxEVT_COMMAND_BUTTON_CLICKED event handler for ID_BITMAPBUTTON
+    void OnParaverShowClick( wxCommandEvent& event );
+
 ////@end Structuredetection event handler declarations
     void OnItemSelection(wxDataViewEvent& event);
+    void OnPGValueChanged(wxPropertyGridEvent& event);
 ////@begin Structuredetection member function declarations
 
     /// Retrieves bitmap resources
@@ -169,11 +249,16 @@ public:
     wxSplitterWindow* main_hsplit;
     wxSplitterWindow* main_split;
     wxDataViewCtrl* dataviewtree_pseudocode;
+    wxPropertyGrid* configuration_propgrid;
+    wxPanel* info_panel;
     wxScrolledWindow* config_panel;
     wxTextCtrl* burst_threshold_text;
     wxComboBox* hwc_combobox;
     wxTextCtrl* rank_filter_text;
-    wxPanel* info_panel;
+    wxSlider* loop_iterations_slider;
+    wxButton* loop_iterations_min;
+    wxButton* loop_iterations_max;
+    wxCheckBox* loop_specific_iteration;
     wxStaticText* general_nphases_label;
     wxStaticText* general_deltas_label;
     wxPanel* callpath_panel;

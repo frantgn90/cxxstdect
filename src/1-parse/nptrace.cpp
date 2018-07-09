@@ -144,15 +144,8 @@ void NPTrace::actual_run(std::string *trace_file)
     if (next_record != NULL)
         this->first_record_after_reorder = next_record;
 
-    // Reorder the buffer
-    //printReorderBuffer();
-    //std::cout << "----------------" << std::endl;
-
     std::sort(this->reorder_buffer.begin(), this->reorder_buffer.end(),
             sort_same_instant_records());
-
-    //printReorderBuffer();
-    //std::cout << "==============" << std::endl;
 
     // Send the first one
     this->result = this->reorder_buffer[0];

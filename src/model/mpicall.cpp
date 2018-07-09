@@ -11,6 +11,7 @@
 #include <boost/bind.hpp>
 #include <iostream>
 #include <numeric>
+#include <math.h>
 
 void RunLenghEncVector::push_back(unsigned int v)
 {
@@ -22,7 +23,10 @@ void RunLenghEncVector::push_back(unsigned int v)
     }
 
     unsigned int lastv = this->back().second;
-    if ( lastv*(1-COMPRESS_EPS) <= v  and v <= lastv*(1+COMPRESS_EPS))
+    unsigned int ubound = ceil((float)lastv*(1+COMPRESS_EPS));
+    unsigned int bbound = ceil((float)lastv*(1-COMPRESS_EPS));
+
+    if (bbound <= v  and v <= ubound)
         this->back().first += 1; // compressed
     else
         std::vector<std::pair<unsigned int,unsigned int>>::push_back(

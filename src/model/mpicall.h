@@ -12,6 +12,7 @@
 #include <string>
 #include <assert.h>
 #include <iostream>
+#include <boost/assert.hpp>
 
 #define COMPRESS_EPS 0.1
 
@@ -29,10 +30,15 @@ class RunLenghEncVector
             for (int j=0; j<this->size(); ++j)
             {
                 pos += this->at(j).first;
-                if (pos > i)
+                if (pos >= i)
                     return this->at(j).second;
             }
+            
+            std::string msg = "ERROR: Requested it:" + std::to_string(i) 
+                + " of " + std::to_string(pos);
+            std::cout << msg << std::endl;
             assert(false);
+            //BOOST_ASSERT_MSG(false, msg.c_str());
         }
 };
 

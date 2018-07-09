@@ -104,6 +104,8 @@ class Loop
         bool isHiddenSuperloop() const
             { return this->is_hidden_superloop; }
         void digest(Loop* l);
+        unsigned int getLongestIteration();
+        unsigned int getShortestIteration();
     private:
         arma::mat centroid;
         size_t loop_id;

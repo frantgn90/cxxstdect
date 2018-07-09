@@ -29,33 +29,39 @@ void ParaverInterface::OpenTrace(std::string cfg)
     std::ofstream pf;
     pf.open(this->paraload_file_name);
     pf  << this->paraver_conf_files << cfg << "\n"
-        << "0:" << this->traceduration << "\n"
-        << this->tracepath << "\n";
+        << "0:" << this->traceduration << "\n";
+    //    << this->tracepath << "\n";
     pf.close();
 
     this->runParaver();
-    usleep(1000000);
     this->knockParaver(SIGUSR1);
 }
 
-void ParaverInterface::Zoom(unsigned int from, unsigned int to)
+void ParaverInterface::Zoom(unsigned int from, unsigned int to, bool new_tl)
 {
-    std::ofstream pf(this->paraload_file_name, std::ofstream::out);
-
+    std::ofstream pf;
+    pf.open(this->paraload_file_name);
     pf  << this->paraver_conf_files << this->paraver_configuration << "\n"
-        << from << ":" << to << "\n"
-        << this->tracepath << "\n";
+        << from << ":" << to << "\n";
+    //    << this->tracepath << "\n";
     pf.close();
 
     this->runParaver();
-    this->knockParaver(SIGUSR2);
+    if (new_tl)
+        this->knockParaver(SIGUSR1);
+    else
+        this->knockParaver(SIGUSR2);
 }
 
 void ParaverInterface::runParaver()
 {
     if (this->paraverpid != 0)
-        if(kill(this->paraverpid, 0) != ESRCH)
+    {
+        if(kill(this->paraverpid, 0) == 0)
             return;
+            //if(errno != ESRCH)
+            //    return;
+    }
     
     pid_t pid = fork();
     if (pid == -1)
@@ -69,14 +75,10 @@ void ParaverInterface::runParaver()
         exit(1);
     } 
     this->paraverpid = pid;
+    usleep(1000000); // just wait a bit before send any signal
 }
 
 void ParaverInterface::knockParaver(unsigned int signal)
 {
-    if (this->paraverpid != 0)
-        if(kill(this->paraverpid, 0) == ESRCH)
-            runParaver();
-    else
-        runParaver();
-    kill(this->paraverpid, signal);    
+    kill(this->paraverpid, signal);
 }

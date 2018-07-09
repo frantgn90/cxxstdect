@@ -44,8 +44,7 @@
 #include "../../../paraver/git/wxparaver/icons/file_browser.xpm"
 #include "../../imgs/derived_add.xpm"
 #include "../../../paraver/git/wxparaver/icons/derived_substract.xpm"
-#include "../../../paraver/git/wxparaver/icons/cut_trace.xpm"
-#include "../../../paraver/git/wxparaver/icons/histo_zoom.xpm"
+#include "app_edit.xpm"
 #include "../../imgs/timeline.xpm"
 #include "../../../paraver/git/wxparaver/icons/new_window.xpm"
 #include "../../../paraver/git/wxparaver/icons/delete.xpm"
@@ -70,15 +69,17 @@ BEGIN_EVENT_TABLE( Structuredetection, wxFrame )
     EVT_MENU( ID_TOOL3, Structuredetection::OnFoldButtonClick )
     EVT_MENU( ID_TOOL, Structuredetection::OnToolClick )
     EVT_MENU( ID_TOOL1, Structuredetection::OnInfoButtonClick )
-    EVT_MENU( ID_TOOL4, Structuredetection::OnShowParaverButtonClick )
     EVT_MENU( ID_TOOL5, Structuredetection::OnShowClusteringButtonClick )
     EVT_MENU( wxID_EXIT, Structuredetection::OnExitClick )
     EVT_UPDATE_UI( ID_TREECTRL, Structuredetection::OnTreectrlUpdate )
     EVT_CHECKBOX( ID_CHECKBOX, Structuredetection::OnShowComputationsCheckboxClick )
     EVT_COMBOBOX( ID_COMBOCTRL, Structuredetection::OnHWCComboctrlSelected )
     EVT_BUTTON( ID_BUTTON, Structuredetection::OnFilterButtonClick )
+    EVT_CHECKBOX( ID_CHECKBOX1, Structuredetection::OnSpecificIterationCheckboxClick )
+    EVT_BUTTON( ID_BITMAPBUTTON, Structuredetection::OnParaverShowClick )
 ////@end Structuredetection event table entries
     EVT_DATAVIEW_SELECTION_CHANGED( ID_TREECTRL, Structuredetection::OnItemSelection)
+    EVT_PG_CHANGED(ID_PROPGRID, Structuredetection::OnPGValueChanged)
 END_EVENT_TABLE()
 
 
@@ -111,9 +112,9 @@ bool Structuredetection::Create( wxWindow* parent, wxWindowID id, const wxString
     Centre();
 
     if (FindWindow(ID_SASHWINDOW))
-        ((wxSplitterWindow*) FindWindow(ID_SASHWINDOW))->SetSashPosition(-170);
+        ((wxSplitterWindow*) FindWindow(ID_SASHWINDOW))->SetSashPosition(-60);
     if (FindWindow(ID_SPLITTERWINDOW))
-        ((wxSplitterWindow*) FindWindow(ID_SPLITTERWINDOW))->SetSashPosition(-70);
+        ((wxSplitterWindow*) FindWindow(ID_SPLITTERWINDOW))->SetSashPosition(-220);
 ////@end Structuredetection creation
     return true;
 }
@@ -142,11 +143,16 @@ void Structuredetection::Init()
     main_hsplit = NULL;
     main_split = NULL;
     dataviewtree_pseudocode = NULL;
+    configuration_propgrid = NULL;
+    info_panel = NULL;
     config_panel = NULL;
     burst_threshold_text = NULL;
     hwc_combobox = NULL;
     rank_filter_text = NULL;
-    info_panel = NULL;
+    loop_iterations_slider = NULL;
+    loop_iterations_min = NULL;
+    loop_iterations_max = NULL;
+    loop_specific_iteration = NULL;
     general_nphases_label = NULL;
     general_deltas_label = NULL;
     callpath_panel = NULL;
@@ -183,35 +189,32 @@ void Structuredetection::CreateControls()
     wxBitmap itemtool7Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/derived_substract.xpm")));
     wxBitmap itemtool7BitmapDisabled;
     itemToolBar3->AddTool(ID_TOOL3, wxEmptyString, itemtool7Bitmap, itemtool7BitmapDisabled, wxITEM_NORMAL, _("Unfold less"), _("Unfold less"));
-    wxBitmap itemtool8Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/cut_trace.xpm")));
-    wxBitmap itemtool8BitmapDisabled;
-    itemToolBar3->AddTool(ID_TOOL, wxEmptyString, itemtool8Bitmap, itemtool8BitmapDisabled, wxITEM_NORMAL, _("Show configuration panel"), _("Show configuration panel"));
-    wxBitmap itemtool9Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/histo_zoom.xpm")));
+    wxStaticLine* itemStaticLine8 = new wxStaticLine( itemToolBar3, wxID_STATIC, wxDefaultPosition, wxSize(-1, 20), wxLI_HORIZONTAL );
+    itemToolBar3->AddControl(itemStaticLine8);
+    wxBitmap itemtool9Bitmap(itemFrame1->GetBitmapResource(wxT("app_edit.xpm")));
     wxBitmap itemtool9BitmapDisabled;
-    itemToolBar3->AddTool(ID_TOOL1, wxEmptyString, itemtool9Bitmap, itemtool9BitmapDisabled, wxITEM_NORMAL, _("Show information panel"), _("Show information panel"));
-    wxStaticLine* itemStaticLine10 = new wxStaticLine( itemToolBar3, wxID_STATIC, wxDefaultPosition, wxSize(-1, 20), wxLI_HORIZONTAL );
-    itemToolBar3->AddControl(itemStaticLine10);
-    wxBitmap itemtool11Bitmap(itemFrame1->GetBitmapResource(wxT("../../imgs/timeline.xpm")));
+    itemToolBar3->AddTool(ID_TOOL, wxEmptyString, itemtool9Bitmap, itemtool9BitmapDisabled, wxITEM_NORMAL, _("Show configuration panel"), _("Show configuration panel"));
+    wxBitmap itemtool10Bitmap(itemFrame1->GetBitmapResource(wxT("../../imgs/timeline.xpm")));
+    wxBitmap itemtool10BitmapDisabled;
+    itemToolBar3->AddTool(ID_TOOL1, wxEmptyString, itemtool10Bitmap, itemtool10BitmapDisabled, wxITEM_NORMAL, _("Show information panel"), _("Show information panel"));
+    wxBitmap itemtool11Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/new_window.xpm")));
     wxBitmap itemtool11BitmapDisabled;
-    itemToolBar3->AddTool(ID_TOOL4, _("Launch paraver"), itemtool11Bitmap, itemtool11BitmapDisabled, wxITEM_NORMAL, _("Launch paraver"), _("Launch paraver"));
-    wxBitmap itemtool12Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/new_window.xpm")));
-    wxBitmap itemtool12BitmapDisabled;
-    itemToolBar3->AddTool(ID_TOOL5, _("Show clustering"), itemtool12Bitmap, itemtool12BitmapDisabled, wxITEM_NORMAL, _("Show clustering"), _("Show clustering"));
-    wxStaticLine* itemStaticLine13 = new wxStaticLine( itemToolBar3, wxID_STATIC, wxDefaultPosition, wxSize(-1, 20), wxLI_HORIZONTAL );
-    itemToolBar3->AddControl(itemStaticLine13);
-    wxBitmap itemtool14Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/delete.xpm")));
-    wxBitmap itemtool14BitmapDisabled;
-    itemToolBar3->AddTool(wxID_EXIT, wxEmptyString, itemtool14Bitmap, itemtool14BitmapDisabled, wxITEM_NORMAL, _("Exit program"), _("Exit program"));
+    itemToolBar3->AddTool(ID_TOOL5, _("Show clustering"), itemtool11Bitmap, itemtool11BitmapDisabled, wxITEM_NORMAL, _("Show clustering"), _("Show clustering"));
+    wxStaticLine* itemStaticLine12 = new wxStaticLine( itemToolBar3, wxID_STATIC, wxDefaultPosition, wxSize(-1, 20), wxLI_HORIZONTAL );
+    itemToolBar3->AddControl(itemStaticLine12);
+    wxBitmap itemtool13Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/delete.xpm")));
+    wxBitmap itemtool13BitmapDisabled;
+    itemToolBar3->AddTool(wxID_EXIT, wxEmptyString, itemtool13Bitmap, itemtool13BitmapDisabled, wxITEM_NORMAL, _("Exit program"), _("Exit program"));
     itemToolBar3->Realize();
     itemFrame1->SetToolBar(itemToolBar3);
 
-    wxBoxSizer* itemBoxSizer15 = new wxBoxSizer(wxVERTICAL);
-    itemFrame1->SetSizer(itemBoxSizer15);
+    wxBoxSizer* itemBoxSizer14 = new wxBoxSizer(wxVERTICAL);
+    itemFrame1->SetSizer(itemBoxSizer14);
 
     trace_file_path_text = new wxTextCtrl( itemFrame1, ID_TEXTCTRL2, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer15->Add(trace_file_path_text, 0, wxGROW|wxLEFT|wxRIGHT|wxTOP, 3);
+    itemBoxSizer14->Add(trace_file_path_text, 0, wxGROW|wxLEFT|wxRIGHT|wxTOP, 3);
 
-    main_hsplit = new wxSplitterWindow( itemFrame1, ID_SASHWINDOW, wxDefaultPosition, wxSize(100, 100), wxSP_BORDER|wxSP_3DSASH|wxDOUBLE_BORDER );
+    main_hsplit = new wxSplitterWindow( itemFrame1, ID_SASHWINDOW, wxDefaultPosition, wxSize(100, 100), wxNO_BORDER );
     main_hsplit->SetMinimumPaneSize(0);
 
     main_split = new wxSplitterWindow( main_hsplit, ID_SPLITTERWINDOW, wxDefaultPosition, wxSize(100, 100), wxSP_3DBORDER|wxSP_3DSASH|wxNO_BORDER );
@@ -222,93 +225,124 @@ void Structuredetection::CreateControls()
     dataviewtree_pseudocode->SetName(wxT("code_structure"));
     dataviewtree_pseudocode->SetBackgroundColour(wxColour(255, 255, 255));
 
-    config_panel = new wxScrolledWindow( main_split, ID_PANEL, wxDefaultPosition, wxDefaultSize, wxNO_BORDER|wxHSCROLL|wxTAB_TRAVERSAL );
+    configuration_propgrid = new wxPropertyGrid( main_split, ID_PROPGRID, wxDefaultPosition, wxSize(100, 100), wxNO_BORDER );
+    configuration_propgrid->SetName(wxT("configurations_propgrid"));
+
+    main_split->SplitVertically(dataviewtree_pseudocode, configuration_propgrid, -220);
+    info_panel = new wxPanel( main_hsplit, ID_PANEL1, wxDefaultPosition, wxDefaultSize, wxNO_BORDER|wxHSCROLL|wxTAB_TRAVERSAL );
+    info_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
+    config_panel = new wxScrolledWindow( info_panel, ID_PANEL, wxDefaultPosition, wxDefaultSize, wxNO_BORDER|wxHSCROLL|wxTAB_TRAVERSAL );
     config_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
+    config_panel->Show(false);
     config_panel->SetScrollbars(1, 1, 0, 0);
-    wxBoxSizer* itemBoxSizer21 = new wxBoxSizer(wxHORIZONTAL);
-    config_panel->SetSizer(itemBoxSizer21);
+    wxBoxSizer* itemBoxSizer22 = new wxBoxSizer(wxHORIZONTAL);
+    config_panel->SetSizer(itemBoxSizer22);
 
-    wxCheckBox* itemCheckBox22 = new wxCheckBox( config_panel, ID_CHECKBOX, _("Show CPU bursts"), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT );
-    itemCheckBox22->SetValue(false);
-    itemBoxSizer21->Add(itemCheckBox22, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxCheckBox* itemCheckBox23 = new wxCheckBox( config_panel, ID_CHECKBOX, _("Show CPU bursts"), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT );
+    itemCheckBox23->SetValue(false);
+    itemBoxSizer22->Add(itemCheckBox23, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxStaticText* itemStaticText23 = new wxStaticText( config_panel, wxID_STATIC, _("T >"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer21->Add(itemStaticText23, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxStaticText* itemStaticText24 = new wxStaticText( config_panel, wxID_STATIC, _("T >"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer22->Add(itemStaticText24, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
     burst_threshold_text = new wxTextCtrl( config_panel, ID_TEXTCTRL1, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
     burst_threshold_text->Enable(false);
-    itemBoxSizer21->Add(burst_threshold_text, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer22->Add(burst_threshold_text, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxStaticLine* itemStaticLine25 = new wxStaticLine( config_panel, wxID_STATIC, wxDefaultPosition, wxSize(10, -1), wxLI_VERTICAL );
-    itemBoxSizer21->Add(itemStaticLine25, 0, wxGROW|wxALL, 5);
+    wxStaticLine* itemStaticLine26 = new wxStaticLine( config_panel, wxID_STATIC, wxDefaultPosition, wxSize(10, -1), wxLI_VERTICAL );
+    itemBoxSizer22->Add(itemStaticLine26, 0, wxGROW|wxALL, 5);
 
-    wxStaticText* itemStaticText26 = new wxStaticText( config_panel, wxID_STATIC, _("HWC"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer21->Add(itemStaticText26, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxStaticText* itemStaticText27 = new wxStaticText( config_panel, wxID_STATIC, _("HWC"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer22->Add(itemStaticText27, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
     wxArrayString hwc_comboboxStrings;
     hwc_combobox = new wxComboBox( config_panel, ID_COMBOCTRL, wxEmptyString, wxDefaultPosition, wxDefaultSize, hwc_comboboxStrings, wxCB_DROPDOWN );
-    itemBoxSizer21->Add(hwc_combobox, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer22->Add(hwc_combobox, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxStaticLine* itemStaticLine28 = new wxStaticLine( config_panel, wxID_STATIC, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
-    itemBoxSizer21->Add(itemStaticLine28, 0, wxGROW|wxALL, 5);
+    wxStaticLine* itemStaticLine29 = new wxStaticLine( config_panel, wxID_STATIC, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
+    itemBoxSizer22->Add(itemStaticLine29, 0, wxGROW|wxALL, 5);
 
-    wxStaticText* itemStaticText29 = new wxStaticText( config_panel, wxID_STATIC, _("Rank filter"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer21->Add(itemStaticText29, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxStaticText* itemStaticText30 = new wxStaticText( config_panel, wxID_STATIC, _("Rank filter"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer22->Add(itemStaticText30, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
     rank_filter_text = new wxTextCtrl( config_panel, ID_TEXTCTRL, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer21->Add(rank_filter_text, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer22->Add(rank_filter_text, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxStaticLine* itemStaticLine31 = new wxStaticLine( config_panel, wxID_STATIC, wxDefaultPosition, wxSize(10, -1), wxLI_VERTICAL );
-    itemBoxSizer21->Add(itemStaticLine31, 0, wxGROW|wxALL, 5);
+    wxStaticLine* itemStaticLine32 = new wxStaticLine( config_panel, wxID_STATIC, wxDefaultPosition, wxSize(10, -1), wxLI_VERTICAL );
+    itemBoxSizer22->Add(itemStaticLine32, 0, wxGROW|wxALL, 5);
 
-    wxButton* itemButton32 = new wxButton( config_panel, ID_BUTTON, _("Apply"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer21->Add(itemButton32, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxButton* itemButton33 = new wxButton( config_panel, ID_BUTTON, _("Apply"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer22->Add(itemButton33, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
     config_panel->FitInside();
-    main_split->SplitHorizontally(dataviewtree_pseudocode, config_panel, -70);
-    info_panel = new wxPanel( main_hsplit, ID_PANEL1, wxDefaultPosition, wxDefaultSize, wxNO_BORDER|wxHSCROLL|wxTAB_TRAVERSAL );
-    info_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
     wxBoxSizer* itemBoxSizer34 = new wxBoxSizer(wxVERTICAL);
     info_panel->SetSizer(itemBoxSizer34);
 
     wxBoxSizer* itemBoxSizer35 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer34->Add(itemBoxSizer35, 1, wxGROW|wxALL, 5);
-    wxStaticBox* itemStaticBoxSizer36Static = new wxStaticBox(info_panel, wxID_ANY, _("General info"));
-    wxStaticBoxSizer* itemStaticBoxSizer36 = new wxStaticBoxSizer(itemStaticBoxSizer36Static, wxHORIZONTAL);
-    itemBoxSizer35->Add(itemStaticBoxSizer36, 0, wxALIGN_TOP|wxALL, 5);
-    wxBoxSizer* itemBoxSizer37 = new wxBoxSizer(wxHORIZONTAL);
-    itemStaticBoxSizer36->Add(itemBoxSizer37, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-    wxStaticText* itemStaticText38 = new wxStaticText( itemStaticBoxSizer36->GetStaticBox(), wxID_STATIC, _("N. Phases:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer37->Add(itemStaticText38, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer34->Add(itemBoxSizer35, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+    loop_iterations_slider = new wxSlider( info_panel, ID_SLIDER, 0, 0, 100, wxDefaultPosition, wxSize(200, -1), wxSL_AUTOTICKS|wxSL_LABELS|wxSL_LEFT|wxNO_BORDER );
+    loop_iterations_slider->Enable(false);
+    itemBoxSizer35->Add(loop_iterations_slider, 0, wxGROW|wxALL, 0);
 
-    general_nphases_label = new wxStaticText( itemStaticBoxSizer36->GetStaticBox(), wxID_STATIC, _("2"), wxDefaultPosition, wxDefaultSize, 0 );
+    loop_iterations_min = new wxButton( info_panel, ID_BUTTON1, _("Min"), wxDefaultPosition, wxDefaultSize, 0 );
+    loop_iterations_min->Enable(false);
+    itemBoxSizer35->Add(loop_iterations_min, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+
+    loop_iterations_max = new wxButton( info_panel, ID_BUTTON2, _("Max"), wxDefaultPosition, wxDefaultSize, 0 );
+    loop_iterations_max->Enable(false);
+    itemBoxSizer35->Add(loop_iterations_max, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+
+    wxStaticLine* itemStaticLine39 = new wxStaticLine( info_panel, wxID_STATIC, wxDefaultPosition, wxSize(20, -1), wxLI_VERTICAL );
+    itemBoxSizer35->Add(itemStaticLine39, 0, wxGROW|wxALL, 5);
+
+    loop_specific_iteration = new wxCheckBox( info_panel, ID_CHECKBOX1, _("Specific iteration"), wxDefaultPosition, wxDefaultSize, 0 );
+    loop_specific_iteration->SetValue(false);
+    itemBoxSizer35->Add(loop_specific_iteration, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+
+    wxButton* itemButton41 = new wxButton( info_panel, ID_BITMAPBUTTON, _("Show in Paraver"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer35->Add(itemButton41, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+
+    wxBoxSizer* itemBoxSizer42 = new wxBoxSizer(wxHORIZONTAL);
+    itemBoxSizer34->Add(itemBoxSizer42, 1, wxGROW|wxALL, 5);
+    wxStaticBox* itemStaticBoxSizer43Static = new wxStaticBox(info_panel, wxID_ANY, _("General info"));
+    wxStaticBoxSizer* itemStaticBoxSizer43 = new wxStaticBoxSizer(itemStaticBoxSizer43Static, wxHORIZONTAL);
+    itemStaticBoxSizer43Static->Show(false);
+    itemBoxSizer42->Add(itemStaticBoxSizer43, 0, wxALIGN_TOP|wxALL, 5);
+    wxBoxSizer* itemBoxSizer44 = new wxBoxSizer(wxHORIZONTAL);
+    itemStaticBoxSizer43->Add(itemBoxSizer44, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxStaticText* itemStaticText45 = new wxStaticText( itemStaticBoxSizer43->GetStaticBox(), wxID_STATIC, _("N. Phases:"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer44->Add(itemStaticText45, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+
+    general_nphases_label = new wxStaticText( itemStaticBoxSizer43->GetStaticBox(), wxID_STATIC, _("2"), wxDefaultPosition, wxDefaultSize, 0 );
     general_nphases_label->SetFont(wxFont(10, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxT("Sans")));
-    itemBoxSizer37->Add(general_nphases_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer44->Add(general_nphases_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxBoxSizer* itemBoxSizer40 = new wxBoxSizer(wxHORIZONTAL);
-    itemStaticBoxSizer36->Add(itemBoxSizer40, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-    wxStaticText* itemStaticText41 = new wxStaticText( itemStaticBoxSizer36->GetStaticBox(), wxID_STATIC, _("Deltas:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer40->Add(itemStaticText41, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxBoxSizer* itemBoxSizer47 = new wxBoxSizer(wxHORIZONTAL);
+    itemStaticBoxSizer43->Add(itemBoxSizer47, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxStaticText* itemStaticText48 = new wxStaticText( itemStaticBoxSizer43->GetStaticBox(), wxID_STATIC, _("Deltas:"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer47->Add(itemStaticText48, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    general_deltas_label = new wxStaticText( itemStaticBoxSizer36->GetStaticBox(), wxID_STATIC, _("0,32; 0,4"), wxDefaultPosition, wxDefaultSize, 0 );
+    general_deltas_label = new wxStaticText( itemStaticBoxSizer43->GetStaticBox(), wxID_STATIC, _("0,32; 0,4"), wxDefaultPosition, wxDefaultSize, 0 );
     general_deltas_label->SetFont(wxFont(10, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxT("Sans")));
-    itemBoxSizer40->Add(general_deltas_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer47->Add(general_deltas_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxStaticBox* itemStaticBoxSizer43Static = new wxStaticBox(info_panel, wxID_ANY, _("Selection callstack"));
-    wxStaticBoxSizer* itemStaticBoxSizer43 = new wxStaticBoxSizer(itemStaticBoxSizer43Static, wxVERTICAL);
-    itemBoxSizer35->Add(itemStaticBoxSizer43, 1, wxGROW|wxALL, 5);
-    callpath_panel = new wxPanel( itemStaticBoxSizer43->GetStaticBox(), ID_PANEL3, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+    wxStaticBox* itemStaticBoxSizer50Static = new wxStaticBox(info_panel, wxID_ANY, _("Selection callstack"));
+    wxStaticBoxSizer* itemStaticBoxSizer50 = new wxStaticBoxSizer(itemStaticBoxSizer50Static, wxVERTICAL);
+    itemStaticBoxSizer50Static->Show(false);
+    itemBoxSizer42->Add(itemStaticBoxSizer50, 1, wxGROW|wxALL, 5);
+    callpath_panel = new wxPanel( itemStaticBoxSizer50->GetStaticBox(), ID_PANEL3, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
     callpath_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
-    itemStaticBoxSizer43->Add(callpath_panel, 1, wxALIGN_CENTER_HORIZONTAL|wxALL, 0);
+    callpath_panel->Show(false);
+    itemStaticBoxSizer50->Add(callpath_panel, 1, wxALIGN_CENTER_HORIZONTAL|wxALL, 0);
     selected_item_callpath = new wxBoxSizer(wxVERTICAL);
     callpath_panel->SetSizer(selected_item_callpath);
 
-    main_hsplit->SplitHorizontally(main_split, info_panel, -170);
-    itemBoxSizer15->Add(main_hsplit, 1, wxGROW|wxALL, 5);
+    main_hsplit->SplitHorizontally(main_split, info_panel, -60);
+    itemBoxSizer14->Add(main_hsplit, 1, wxGROW|wxALL, 0);
 
     legend_panel = new wxPanel( itemFrame1, ID_PANEL2, wxDefaultPosition, wxSize(-1, 25), wxNO_BORDER|wxTAB_TRAVERSAL );
     legend_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
-    itemBoxSizer15->Add(legend_panel, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 0);
+    itemBoxSizer14->Add(legend_panel, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 0);
 
     legend_panel_sizer = new wxBoxSizer(wxHORIZONTAL);
     legend_panel->SetSizer(legend_panel_sizer);
@@ -320,7 +354,7 @@ void Structuredetection::CreateControls()
     
     // Initally filter panel should not be shown
     this->main_hsplit->Unsplit(NULL);
-    this->main_split->Unsplit(NULL);
+    //this->main_split->Unsplit(NULL);
 
     // Adding columns to dataviewctrl
     wxDataViewTextRenderer *tr = new wxDataViewTextRenderer();
@@ -337,19 +371,55 @@ void Structuredetection::CreateControls()
 
 
     wxDataViewColumn *column1 =
-        new wxDataViewColumn( "Duration", tr2, 1, 125, wxALIGN_RIGHT,
+        new wxDataViewColumn( "Duration", tr2, 1, 115, wxALIGN_RIGHT,
                 wxDATAVIEW_COL_RESIZABLE );
     wxDataViewColumn *column2 =
-        new wxDataViewColumn( "Msg. Size", tr3, 2, 125, wxALIGN_RIGHT,
+        new wxDataViewColumn( "Msg. Size", tr3, 2, 115, wxALIGN_RIGHT,
                 wxDATAVIEW_COL_RESIZABLE );
     wxDataViewColumn *column3 =
-        new wxDataViewColumn( "HWC", tr1, 3, 125, wxALIGN_RIGHT,
+        new wxDataViewColumn( "HWC", tr1, 3, 115, wxALIGN_RIGHT,
                 wxDATAVIEW_COL_RESIZABLE );
 
     dataviewtree_pseudocode->AppendColumn(column0);
     dataviewtree_pseudocode->AppendColumn(column1);
     dataviewtree_pseudocode->AppendColumn(column2);
     dataviewtree_pseudocode->AppendColumn(column3);
+
+    /*
+    std::vector<ItemConfiguration> main_configs = { 
+        ItemConfiguration<bool>("Show CPU Burst", getShowCPU, setShowCPU),
+        ItemConfiguration<int>("CPU Thresshold", getCPUThresshold, setCPUThresshold)
+    };
+
+    Configuration* config = new Configuration();
+    config->newConfGroup(this->main_configs);
+    config->toPropGrid(this->configuration_propgrid);
+    */
+
+    // Fill the configuration wxPropertyGrid with general configs
+    wxArrayString time_units;
+    time_units.Add("ns");
+    time_units.Add("us");
+    time_units.Add("ms");
+    time_units.Add("s");
+    
+    wxArrayString size_units;
+    size_units.Add("Byte");
+    size_units.Add("KByte");
+    size_units.Add("MByte");
+    size_units.Add("GByte");
+
+    configuration_propgrid->Append( new wxPropertyCategory("Main") );
+    this->configuration_propgrid->Append(
+            new wxStringProperty(CONFIG_LABEL_MPI_FILTER, wxPG_LABEL, ""));
+    this->configuration_propgrid->Append(
+            new wxEnumProperty(CONFIG_LABEL_TIME_UNITS, wxPG_LABEL, time_units));
+    this->configuration_propgrid->Append(
+            new wxEnumProperty(CONFIG_LABEL_SIZE_UNITS, wxPG_LABEL, size_units));
+    this->configuration_propgrid->Append(
+            new wxBoolProperty(CONFIG_LABEL_CPU_BURSTS, wxPG_LABEL, false));
+    this->configuration_propgrid->Append(
+            new wxIntProperty(CONFIG_LABEL_CPU_LOWBND, wxPG_LABEL, 0));
 }
 
 
@@ -386,14 +456,9 @@ wxBitmap Structuredetection::GetBitmapResource( const wxString& name )
         wxBitmap bitmap(derived_substract_xpm);
         return bitmap;
     }
-    else if (name == wxT("../../../paraver/git/wxparaver/icons/cut_trace.xpm"))
+    else if (name == wxT("app_edit.xpm"))
     {
-        wxBitmap bitmap(cut_trace_xpm);
-        return bitmap;
-    }
-    else if (name == wxT("../../../paraver/git/wxparaver/icons/histo_zoom.xpm"))
-    {
-        wxBitmap bitmap(histo_zoom_xpm);
+        wxBitmap bitmap(app_edit_xpm);
         return bitmap;
     }
     else if (name == wxT("../../imgs/timeline.xpm"))
@@ -458,9 +523,12 @@ void Structuredetection::OnToolClick( wxCommandEvent& event )
     if (this->main_split->IsSplit())
         this->main_split->Unsplit(NULL);
     else
-        this->main_split->SplitHorizontally(
+        this->main_split->SplitVertically(
             this->dataviewtree_pseudocode, 
-            this->config_panel, -70);
+            this->configuration_propgrid, -200);
+        //this->main_split->SplitHorizontally(
+        //    this->dataviewtree_pseudocode, 
+        //    this->config_panel, -70);
 }
 
 
@@ -525,7 +593,7 @@ void Structuredetection::OnInfoButtonClick( wxCommandEvent& event )
     else
         this->main_hsplit->SplitHorizontally(
             this->main_split, 
-            this->info_panel, -140);
+            this->info_panel, -60);
 }
 
 
@@ -600,29 +668,38 @@ void Structuredetection::OnItemSelection(wxDataViewEvent& event)
                 event.GetItem().GetID());
         GUIRepresentation* obj = item->getActualObject();
 
-        
-        selected_item_callpath->Clear(true);
-        std::vector<Caller> callpath = obj->getCallpath();
-        for (auto it : callpath)
+        if (obj->isLoop())
         {
-            unsigned int line = std::get<0>(it);
-            std::string file = std::get<1>(it);
-            std::string caller = std::get<2>(it);
-
-            std::string caller_text = caller + " [" + file + ":" 
-                + std::to_string(line) + "]";
-            wxStaticText* new_callpath_item = new wxStaticText( 
-                    this->callpath_panel, 
-                    wxID_STATIC, _(caller_text), 
-                    wxDefaultPosition, wxDefaultSize, 0 );
-
-            new_callpath_item->SetFont(wxFont(10, wxFONTFAMILY_SWISS, 
-                        wxFONTSTYLE_NORMAL, 
-                        wxFONTWEIGHT_BOLD, false, wxT("Sans")));
-            new_callpath_item->CenterOnParent();
-            selected_item_callpath->Add(new_callpath_item, 0, wxALL, 5);
+            GUILoop* l = static_cast<GUILoop*>(obj);
+            this->loop_iterations_slider->SetRange(1,l->getNIterations());
+            this->selected_loop = static_cast<void*>(l);
         }
-        this->callpath_panel->Layout();
+        else
+        {
+            this->selected_loop = NULL;
+            selected_item_callpath->Clear(true);
+            std::vector<Caller> callpath = obj->getCallpath();
+            for (auto it : callpath)
+            {
+                unsigned int line = std::get<0>(it);
+                std::string file = std::get<1>(it);
+                std::string caller = std::get<2>(it);
+
+                std::string caller_text = caller + " [" + file + ":" 
+                    + std::to_string(line) + "]";
+                wxStaticText* new_callpath_item = new wxStaticText( 
+                        this->callpath_panel, 
+                        wxID_STATIC, _(caller_text), 
+                        wxDefaultPosition, wxDefaultSize, 0 );
+
+                new_callpath_item->SetFont(wxFont(10, wxFONTFAMILY_SWISS, 
+                            wxFONTSTYLE_NORMAL, 
+                            wxFONTWEIGHT_BOLD, false, wxT("Sans")));
+                new_callpath_item->CenterOnParent();
+                selected_item_callpath->Add(new_callpath_item, 0, wxALL, 5);
+            }
+            this->callpath_panel->Layout();
+        }
     }
 }
 
@@ -772,15 +849,16 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
     std::vector<std::vector<unsigned int>> event_types = 
         trace_semantic.getGroupedEventTypes();
 
+    wxArrayString hwc_types;
     for (auto group : event_types)
         for (unsigned int type : group)
             if (type >= 42000000 and type < 43000000)
             {
                 std::string hwc_type_name = trace_semantic.getEventType(type);
-                this->hwc_combobox->Append(hwc_type_name);
-                // TODO : Insert to combobox
+                hwc_types.Add(hwc_type_name);
             }
-    this->hwc_combobox->SetSelection(0);
+    this->configuration_propgrid->Append(
+            new wxEnumProperty(CONFIG_LABEL_CPU_HWC, wxPG_LABEL, hwc_types));
 
     TraceHeader trace_info(tracefile);
     paraver_interface = new ParaverInterface(tracefile, trace_info.texe);
@@ -822,7 +900,7 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
     wxDataViewModel* model = (wxDataViewModel*)pseudocode.getResult();
     this->SetAssociateModel(model);
     static_cast<wxPseudocode*>(model)->setHWCColumnType(
-            std::string(this->hwc_combobox->GetString(0)));
+            std::string(hwc_types[0]));
 
     std::vector<std::pair<std::vector<unsigned int>*, std::string>> color_map;
     color_map = pseudocode.getResult()->getColormap();
@@ -847,11 +925,6 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
 
 void Structuredetection::OnHWCComboctrlSelected( wxCommandEvent& event )
 {
-    std::string hwc_name(event.GetString());
-
-    wxPseudocode* mm = static_cast<wxPseudocode*>(dataviewtree_pseudocode
-            ->GetModel());
-    mm->setHWCColumnType(hwc_name);
 }
 
 
@@ -872,13 +945,86 @@ void Structuredetection::OnShowClusteringButtonClick( wxCommandEvent& event )
     std::cout << "gnuplot " << this->gnuplot_script << std::endl;
 }
 
-
 /*
- * wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL4
+ * wxEVT_COMMAND_CHECKBOX_CLICKED event handler for ID_CHECKBOX1
  */
 
-void Structuredetection::OnShowParaverButtonClick( wxCommandEvent& event )
+void Structuredetection::OnSpecificIterationCheckboxClick( wxCommandEvent& event )
 {
-    this->paraver_interface->OpenTrace();
+    this->loop_iterations_slider->Enable(event.IsChecked());
+    this->loop_iterations_max->Enable(event.IsChecked());
+    this->loop_iterations_min->Enable(event.IsChecked());
 }
 
+
+/*
+ * wxEVT_COMMAND_BUTTON_CLICKED event handler for ID_BITMAPBUTTON
+ */
+
+void Structuredetection::OnParaverShowClick( wxCommandEvent& event )
+{
+    if (this->loop_specific_iteration->IsChecked())
+    {
+        unsigned int iteration = this->loop_iterations_slider->GetValue();
+        if (this->selected_loop != NULL)
+        {
+            GUILoop* l = static_cast<GUILoop*>(this->selected_loop);
+            std::pair<unsigned int, unsigned int> it_bounds = 
+                l->getLoopObj()->getIterationsBounds(iteration-1);
+            this->paraver_interface->Zoom(it_bounds.first, it_bounds.second, 
+                    !this->timeline_already_opened);
+            this->timeline_already_opened = true;
+        }
+    }
+    else
+    {
+        this->paraver_interface->OpenTrace();
+        this->timeline_already_opened = true;
+    }
+}
+
+void Structuredetection::OnPGValueChanged(wxPropertyGridEvent& event)
+{
+    wxPseudocode* mm = static_cast<wxPseudocode*>(
+            dataviewtree_pseudocode->GetModel());
+    wxString propName = event.GetPropertyName();
+    if(propName == CONFIG_LABEL_MPI_FILTER)
+    {
+        std::string rank_filter(event.GetPropertyValue());
+        std::string delimiter(",");
+
+        size_t pos = 0;
+        size_t last_pos = 0;
+        std::vector<unsigned int> ranks;
+        if (rank_filter.size() > 0)
+        {
+            while (1) 
+            {
+                pos = rank_filter.find(delimiter, last_pos);
+                std::string token = rank_filter.substr(last_pos, pos-last_pos);
+                ranks.push_back(std::stoi(token));
+
+                last_pos = pos+1;
+                if (pos == std::string::npos)
+                    break;
+            }
+        }
+        mm->setRanksFilter(ranks);
+    }
+    else if (propName == CONFIG_LABEL_CPU_BURSTS)
+    {
+        mm->showComputations(event.GetPropertyValue());
+    }
+    else if (propName == CONFIG_LABEL_CPU_LOWBND)
+    {
+        mm->setComputationsThresshold(event.GetPropertyValue().GetLong());
+    }
+    else if (propName == CONFIG_LABEL_CPU_HWC)
+    {
+        // TODO : What is this thing returning from dropdown property???
+        std::string hwc_t(event.GetPropertyValue());
+        mm->setHWCColumnType(hwc_t);
+    }
+    mm->Cleared();
+    dataviewtree_pseudocode->AssociateModel((wxDataViewModel*) mm);
+}

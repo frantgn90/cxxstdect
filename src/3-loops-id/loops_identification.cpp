@@ -43,6 +43,17 @@ void Loop::digest(Loop* l)
     }
 }
 
+
+unsigned int Loop::getLongestIteration()
+{
+    // TODO : Get the iteration with longest duration
+}
+
+unsigned int Loop::getShortestIteration()
+{
+    // TODO : Get the iteration with shortest duration
+}
+
 bool Loop::isSubloopOf(Loop* l)
 {
     // Both loops were aliased in same cluster
