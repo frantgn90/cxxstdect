@@ -22,8 +22,10 @@ class NPTrace : public PipelineStage<std::string, NPRecord>
             : PipelineStage<std::string, NPRecord>("Parsing", false, true)
             , init(false) 
             , first_record_after_reorder(NULL) 
+            , alias_tolerance(0.1)
     {
-        this->addConfigField<float>("Alias tolerance", 0.1);
+        this->addConfigField<float>("Alias tolerance", 0.1, 
+                &(this->alias_tolerance));
     };
     private:
         void actual_run(std::string *trace_file);
@@ -36,6 +38,7 @@ class NPTrace : public PipelineStage<std::string, NPRecord>
         // just reorder records with same timestamp
         std::vector<NPRecord*> reorder_buffer; 
         NPRecord *first_record_after_reorder;
+        float alias_tolerance;
 };
 
 #endif /* !TRACE_H */

@@ -70,6 +70,7 @@ class Pseudocode;
 #define ID_PROPGRID 10023
 #define ID_PANEL1 10015
 #define ID_SLIDER 10024
+#define ID_SLIDER1 10003
 #define ID_BUTTON1 10025
 #define ID_BUTTON2 10026
 #define ID_CHECKBOX1 10027
@@ -101,6 +102,10 @@ class Pseudocode;
 #define DATAVIEW_COLUMN_1_SIZE 100
 #define DATAVIEW_COLUMN_2_SIZE DATAVIEW_COLUMN_1_SIZE
 #define DATAVIEW_COLUMN_3_SIZE DATAVIEW_COLUMN_1_SIZE
+
+#define PG_PROPERTY_FLOAT 1
+#define PG_PROPERTY_INT 2
+#define PG_PROPERTY_STRING 3
 
 /*!
  * Structuredetection class declaration
@@ -172,6 +177,12 @@ public:
     /// wxEVT_UPDATE_UI event handler for ID_TREECTRL
     void OnTreectrlUpdate( wxUpdateUIEvent& event );
 
+    /// wxEVT_COMMAND_SLIDER_UPDATED event handler for ID_SLIDER
+    void OnIterationSliderUpdated( wxCommandEvent& event );
+
+    /// wxEVT_COMMAND_SLIDER_UPDATED event handler for ID_SLIDER1
+    void OnIterationMaxSliderUpdated( wxCommandEvent& event );
+
     /// wxEVT_COMMAND_CHECKBOX_CLICKED event handler for ID_CHECKBOX1
     void OnSpecificIterationCheckboxClick( wxCommandEvent& event );
 
@@ -202,6 +213,7 @@ public:
     wxPropertyGrid* configuration_propgrid;
     wxPanel* info_panel;
     wxSlider* loop_iterations_slider;
+    wxSlider* loop_iterations_slider_max;
     wxButton* loop_iterations_min;
     wxButton* loop_iterations_max;
     wxCheckBox* loop_specific_iteration;

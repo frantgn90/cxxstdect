@@ -58,18 +58,30 @@
 
 template<> void* ConfigField<float>::myGetManager(float df)
 {
-    return (void *)new wxFloatProperty(this->getName(), 
+    wxFloatProperty* tmp_prop = new wxFloatProperty(this->getName(), 
             wxPG_LABEL, this->getDefault());
+    tmp_prop->SetAttribute("config_field", this);
+    tmp_prop->SetAttribute("config_type", PG_PROPERTY_FLOAT);
+
+    return (void *)tmp_prop;
 }
 template<> void* ConfigField<int>::myGetManager(int df)
 {
-    return (void *)new wxIntProperty(this->getName(), 
+    wxIntProperty* tmp_prop = new wxIntProperty(this->getName(), 
             wxPG_LABEL, this->getDefault());
+    tmp_prop->SetAttribute("config_field", this);
+    tmp_prop->SetAttribute("config_type", PG_PROPERTY_INT);
+
+    return (void *)tmp_prop;
 }
 template<> void* ConfigField<std::string>::myGetManager(std::string df)
 {
-    return (void *)new wxStringProperty(this->getName(), 
+    wxStringProperty* tmp_prop = new wxStringProperty(this->getName(), 
             wxPG_LABEL, this->getDefault());
+    tmp_prop->SetAttribute("config_field", this);
+    tmp_prop->SetAttribute("config_type", PG_PROPERTY_STRING);
+
+    return (void *)tmp_prop;
 }
 
 /*
@@ -94,6 +106,8 @@ BEGIN_EVENT_TABLE( Structuredetection, wxFrame )
     EVT_MENU( ID_TOOL5, Structuredetection::OnShowClusteringButtonClick )
     EVT_MENU( wxID_EXIT, Structuredetection::OnExitClick )
     EVT_UPDATE_UI( ID_TREECTRL, Structuredetection::OnTreectrlUpdate )
+    EVT_SLIDER( ID_SLIDER, Structuredetection::OnIterationSliderUpdated )
+    EVT_SLIDER( ID_SLIDER1, Structuredetection::OnIterationMaxSliderUpdated )
     EVT_CHECKBOX( ID_CHECKBOX1, Structuredetection::OnSpecificIterationCheckboxClick )
     EVT_BUTTON( ID_BITMAPBUTTON, Structuredetection::OnParaverShowClick )
 ////@end Structuredetection event table entries
@@ -131,7 +145,7 @@ bool Structuredetection::Create( wxWindow* parent, wxWindowID id, const wxString
     Centre();
 
     if (FindWindow(ID_SASHWINDOW))
-        ((wxSplitterWindow*) FindWindow(ID_SASHWINDOW))->SetSashPosition(-60);
+        ((wxSplitterWindow*) FindWindow(ID_SASHWINDOW))->SetSashPosition(-110);
     if (FindWindow(ID_SPLITTERWINDOW))
         ((wxSplitterWindow*) FindWindow(ID_SPLITTERWINDOW))->SetSashPosition(-250);
 ////@end Structuredetection creation
@@ -165,6 +179,7 @@ void Structuredetection::Init()
     configuration_propgrid = NULL;
     info_panel = NULL;
     loop_iterations_slider = NULL;
+    loop_iterations_slider_max = NULL;
     loop_iterations_min = NULL;
     loop_iterations_max = NULL;
     loop_specific_iteration = NULL;
@@ -251,9 +266,15 @@ void Structuredetection::CreateControls()
 
     wxBoxSizer* itemBoxSizer22 = new wxBoxSizer(wxHORIZONTAL);
     itemBoxSizer21->Add(itemBoxSizer22, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
-    loop_iterations_slider = new wxSlider( info_panel, ID_SLIDER, 0, 0, 100, wxDefaultPosition, wxSize(200, -1), wxSL_AUTOTICKS|wxSL_LABELS|wxSL_LEFT|wxNO_BORDER );
+    wxBoxSizer* itemBoxSizer23 = new wxBoxSizer(wxVERTICAL);
+    itemBoxSizer22->Add(itemBoxSizer23, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    loop_iterations_slider = new wxSlider( info_panel, ID_SLIDER, 0, 0, 100, wxDefaultPosition, wxSize(200, -1), wxSL_LEFT|wxNO_BORDER );
     loop_iterations_slider->Enable(false);
-    itemBoxSizer22->Add(loop_iterations_slider, 0, wxGROW|wxALL, 0);
+    itemBoxSizer23->Add(loop_iterations_slider, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 0);
+
+    loop_iterations_slider_max = new wxSlider( info_panel, ID_SLIDER1, 0, 0, 100, wxDefaultPosition, wxSize(200, -1), wxSL_AUTOTICKS|wxSL_LABELS|wxSL_LEFT|wxNO_BORDER );
+    loop_iterations_slider_max->Enable(false);
+    itemBoxSizer23->Add(loop_iterations_slider_max, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
 
     loop_iterations_min = new wxButton( info_panel, ID_BUTTON1, _("Min"), wxDefaultPosition, wxDefaultSize, 0 );
     loop_iterations_min->Enable(false);
@@ -263,55 +284,55 @@ void Structuredetection::CreateControls()
     loop_iterations_max->Enable(false);
     itemBoxSizer22->Add(loop_iterations_max, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxStaticLine* itemStaticLine26 = new wxStaticLine( info_panel, wxID_STATIC, wxDefaultPosition, wxSize(20, -1), wxLI_VERTICAL );
-    itemBoxSizer22->Add(itemStaticLine26, 0, wxGROW|wxALL, 5);
+    wxStaticLine* itemStaticLine28 = new wxStaticLine( info_panel, wxID_STATIC, wxDefaultPosition, wxSize(20, -1), wxLI_VERTICAL );
+    itemBoxSizer22->Add(itemStaticLine28, 0, wxGROW|wxALL, 5);
 
     loop_specific_iteration = new wxCheckBox( info_panel, ID_CHECKBOX1, _("Specific iteration"), wxDefaultPosition, wxDefaultSize, 0 );
     loop_specific_iteration->SetValue(false);
     itemBoxSizer22->Add(loop_specific_iteration, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxButton* itemButton28 = new wxButton( info_panel, ID_BITMAPBUTTON, _("Show in Paraver"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer22->Add(itemButton28, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxButton* itemButton30 = new wxButton( info_panel, ID_BITMAPBUTTON, _("Show in Paraver"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer22->Add(itemButton30, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxBoxSizer* itemBoxSizer29 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer21->Add(itemBoxSizer29, 1, wxGROW|wxALL, 5);
-    wxStaticBox* itemStaticBoxSizer30Static = new wxStaticBox(info_panel, wxID_ANY, _("General info"));
-    wxStaticBoxSizer* itemStaticBoxSizer30 = new wxStaticBoxSizer(itemStaticBoxSizer30Static, wxHORIZONTAL);
-    itemStaticBoxSizer30Static->Show(false);
-    itemBoxSizer29->Add(itemStaticBoxSizer30, 0, wxALIGN_TOP|wxALL, 5);
     wxBoxSizer* itemBoxSizer31 = new wxBoxSizer(wxHORIZONTAL);
-    itemStaticBoxSizer30->Add(itemBoxSizer31, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-    wxStaticText* itemStaticText32 = new wxStaticText( itemStaticBoxSizer30->GetStaticBox(), wxID_STATIC, _("N. Phases:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer31->Add(itemStaticText32, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer21->Add(itemBoxSizer31, 1, wxGROW|wxALL, 5);
+    wxStaticBox* itemStaticBoxSizer32Static = new wxStaticBox(info_panel, wxID_ANY, _("General info"));
+    wxStaticBoxSizer* itemStaticBoxSizer32 = new wxStaticBoxSizer(itemStaticBoxSizer32Static, wxHORIZONTAL);
+    itemStaticBoxSizer32Static->Show(false);
+    itemBoxSizer31->Add(itemStaticBoxSizer32, 0, wxALIGN_TOP|wxALL, 5);
+    wxBoxSizer* itemBoxSizer33 = new wxBoxSizer(wxHORIZONTAL);
+    itemStaticBoxSizer32->Add(itemBoxSizer33, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxStaticText* itemStaticText34 = new wxStaticText( itemStaticBoxSizer32->GetStaticBox(), wxID_STATIC, _("N. Phases:"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer33->Add(itemStaticText34, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    general_nphases_label = new wxStaticText( itemStaticBoxSizer30->GetStaticBox(), wxID_STATIC, _("2"), wxDefaultPosition, wxDefaultSize, 0 );
+    general_nphases_label = new wxStaticText( itemStaticBoxSizer32->GetStaticBox(), wxID_STATIC, _("2"), wxDefaultPosition, wxDefaultSize, 0 );
     general_nphases_label->SetFont(wxFont(10, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxT("Sans")));
-    itemBoxSizer31->Add(general_nphases_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer33->Add(general_nphases_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxBoxSizer* itemBoxSizer34 = new wxBoxSizer(wxHORIZONTAL);
-    itemStaticBoxSizer30->Add(itemBoxSizer34, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-    wxStaticText* itemStaticText35 = new wxStaticText( itemStaticBoxSizer30->GetStaticBox(), wxID_STATIC, _("Deltas:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer34->Add(itemStaticText35, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxBoxSizer* itemBoxSizer36 = new wxBoxSizer(wxHORIZONTAL);
+    itemStaticBoxSizer32->Add(itemBoxSizer36, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxStaticText* itemStaticText37 = new wxStaticText( itemStaticBoxSizer32->GetStaticBox(), wxID_STATIC, _("Deltas:"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer36->Add(itemStaticText37, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    general_deltas_label = new wxStaticText( itemStaticBoxSizer30->GetStaticBox(), wxID_STATIC, _("0,32; 0,4"), wxDefaultPosition, wxDefaultSize, 0 );
+    general_deltas_label = new wxStaticText( itemStaticBoxSizer32->GetStaticBox(), wxID_STATIC, _("0,32; 0,4"), wxDefaultPosition, wxDefaultSize, 0 );
     general_deltas_label->SetFont(wxFont(10, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxT("Sans")));
-    itemBoxSizer34->Add(general_deltas_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer36->Add(general_deltas_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxStaticBox* itemStaticBoxSizer37Static = new wxStaticBox(info_panel, wxID_ANY, _("Selection callstack"));
-    wxStaticBoxSizer* itemStaticBoxSizer37 = new wxStaticBoxSizer(itemStaticBoxSizer37Static, wxVERTICAL);
-    itemStaticBoxSizer37Static->Show(false);
-    itemBoxSizer29->Add(itemStaticBoxSizer37, 1, wxGROW|wxALL, 5);
-    callpath_panel = new wxPanel( itemStaticBoxSizer37->GetStaticBox(), ID_PANEL3, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+    wxStaticBox* itemStaticBoxSizer39Static = new wxStaticBox(info_panel, wxID_ANY, _("Selection callstack"));
+    wxStaticBoxSizer* itemStaticBoxSizer39 = new wxStaticBoxSizer(itemStaticBoxSizer39Static, wxVERTICAL);
+    itemStaticBoxSizer39Static->Show(false);
+    itemBoxSizer31->Add(itemStaticBoxSizer39, 1, wxGROW|wxALL, 5);
+    callpath_panel = new wxPanel( itemStaticBoxSizer39->GetStaticBox(), ID_PANEL3, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
     callpath_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
     callpath_panel->Show(false);
-    itemStaticBoxSizer37->Add(callpath_panel, 1, wxALIGN_CENTER_HORIZONTAL|wxALL, 0);
+    itemStaticBoxSizer39->Add(callpath_panel, 1, wxALIGN_CENTER_HORIZONTAL|wxALL, 0);
     selected_item_callpath = new wxBoxSizer(wxVERTICAL);
     callpath_panel->SetSizer(selected_item_callpath);
 
-    main_hsplit->SplitHorizontally(main_split, info_panel, -60);
+    main_hsplit->SplitHorizontally(main_split, info_panel, -110);
     itemBoxSizer14->Add(main_hsplit, 1, wxGROW|wxALL, 0);
 
-    legend_panel = new wxPanel( itemFrame1, ID_PANEL2, wxDefaultPosition, wxSize(-1, 25), wxNO_BORDER|wxTAB_TRAVERSAL );
+    legend_panel = new wxPanel( itemFrame1, ID_PANEL2, wxDefaultPosition, wxSize(-1, 25), wxTAB_TRAVERSAL );
     legend_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
     itemBoxSizer14->Add(legend_panel, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 0);
 
@@ -359,17 +380,6 @@ void Structuredetection::CreateControls()
     dataviewtree_pseudocode->AppendColumn(column1);
     dataviewtree_pseudocode->AppendColumn(column2);
     dataviewtree_pseudocode->AppendColumn(column3);
-
-    /*
-    std::vector<ItemConfiguration> main_configs = { 
-        ItemConfiguration<bool>("Show CPU Burst", getShowCPU, setShowCPU),
-        ItemConfiguration<int>("CPU Thresshold", getCPUThresshold, setCPUThresshold)
-    };
-
-    Configuration* config = new Configuration();
-    config->newConfGroup(this->main_configs);
-    config->toPropGrid(this->configuration_propgrid);
-    */
 
     // Fill the configuration wxPropertyGrid with general configs
     wxArrayString time_units;
@@ -568,7 +578,7 @@ void Structuredetection::OnInfoButtonClick( wxCommandEvent& event )
     else
         this->main_hsplit->SplitHorizontally(
             this->main_split, 
-            this->info_panel, -60);
+            this->info_panel, -100);
 }
 
 void Structuredetection::addLegendItem(std::vector<unsigned int>* ranks, 
@@ -637,6 +647,7 @@ void Structuredetection::OnItemSelection(wxDataViewEvent& event)
         {
             GUILoop* l = static_cast<GUILoop*>(obj);
             this->loop_iterations_slider->SetRange(1,l->getNIterations());
+            this->loop_iterations_slider_max->SetRange(1,l->getNIterations());
             this->selected_loop = static_cast<void*>(l);
         }
         else
@@ -881,6 +892,7 @@ void Structuredetection::OnShowClusteringButtonClick( wxCommandEvent& event )
 void Structuredetection::OnSpecificIterationCheckboxClick( wxCommandEvent& event )
 {
     this->loop_iterations_slider->Enable(event.IsChecked());
+    this->loop_iterations_slider_max->Enable(event.IsChecked());
     this->loop_iterations_max->Enable(event.IsChecked());
     this->loop_iterations_min->Enable(event.IsChecked());
 }
@@ -895,6 +907,7 @@ void Structuredetection::OnParaverShowClick( wxCommandEvent& event )
     if (this->loop_specific_iteration->IsChecked())
     {
         unsigned int iteration = this->loop_iterations_slider->GetValue();
+        unsigned int iteration_max = this->loop_iterations_slider_max->GetValue();
         if (this->selected_loop != NULL)
         {
             GUILoop* l = static_cast<GUILoop*>(this->selected_loop);
@@ -914,50 +927,110 @@ void Structuredetection::OnParaverShowClick( wxCommandEvent& event )
 
 void Structuredetection::OnPGValueChanged(wxPropertyGridEvent& event)
 {
-    wxPseudocode* mm = static_cast<wxPseudocode*>(
-            dataviewtree_pseudocode->GetModel());
-    wxString propName = event.GetPropertyName();
-    if(propName == CONFIG_LABEL_MPI_FILTER)
-    {
-        std::string rank_filter(event.GetPropertyValue());
-        std::string delimiter(",");
+    void* cf = event.GetProperty()->GetAttribute("config_field")
+        .GetVoidPtr();
 
-        size_t pos = 0;
-        size_t last_pos = 0;
-        std::vector<unsigned int> ranks;
-        if (rank_filter.size() > 0)
+    if (cf) // Pipeline options
+    {
+        GeneralConfigField* config_field = static_cast<GeneralConfigField*>(cf);
+        void *new_value;
+        unsigned int ct = event.GetProperty()->GetAttribute("config_type")
+            .GetLong();
+
+        switch(ct)
         {
-            while (1) 
+            case PG_PROPERTY_FLOAT:
             {
-                pos = rank_filter.find(delimiter, last_pos);
-                std::string token = rank_filter.substr(last_pos, pos-last_pos);
-                ranks.push_back(std::stoi(token));
-
-                last_pos = pos+1;
-                if (pos == std::string::npos)
-                    break;
+                float val = event.GetPropertyValue().GetReal();
+                new_value = (void*)&val;
+                break;
             }
+            case PG_PROPERTY_INT:
+            {
+                int val = event.GetPropertyValue().GetLong();
+                new_value = (void*)&val;
+                break;
+            }
+            case PG_PROPERTY_STRING:
+            {
+                std::string val(event.GetPropertyValue().GetString());
+                new_value = (void*)&val;
+                break;
+            }
+            default:
+                assert(false);
         }
-        mm->setRanksFilter(ranks);
+        config_field->setValuep(new_value);
     }
-    else if (propName == CONFIG_LABEL_CPU_BURSTS)
+    else // Main options (added by hand)
     {
-        mm->showComputations(event.GetPropertyValue());
+        wxPseudocode* mm = static_cast<wxPseudocode*>(
+                dataviewtree_pseudocode->GetModel());
+        wxString propName = event.GetPropertyName();
+        if(propName == CONFIG_LABEL_MPI_FILTER)
+        {
+            std::string rank_filter(event.GetPropertyValue());
+            std::string delimiter(",");
+
+            size_t pos = 0;
+            size_t last_pos = 0;
+            std::vector<unsigned int> ranks;
+            if (rank_filter.size() > 0)
+            {
+                while (1) 
+                {
+                    pos = rank_filter.find(delimiter, last_pos);
+                    std::string token = rank_filter.substr(last_pos, pos-last_pos);
+                    ranks.push_back(std::stoi(token));
+
+                    last_pos = pos+1;
+                    if (pos == std::string::npos)
+                        break;
+                }
+            }
+            mm->setRanksFilter(ranks);
+        }
+        else if (propName == CONFIG_LABEL_CPU_BURSTS)
+        {
+            mm->showComputations(event.GetPropertyValue());
+        }
+        else if (propName == CONFIG_LABEL_CPU_LOWBND)
+        {
+            mm->setComputationsThresshold(event.GetPropertyValue().GetLong());
+        }
+        else if (propName == CONFIG_LABEL_CPU_HWC)
+        {
+            auto index = event.GetPropertyValue();
+            std::string hwc_t(event.GetProperty()->ValueToString(index));
+            mm->setHWCColumnType(hwc_t);
+        }
+        // TODO : Whenever the model is updated, the expanded/collapsed items state
+        // should be gathered in order to restore the current state when model is
+        // showed again through the control.
+        //
+        dataviewtree_pseudocode->AssociateModel((wxDataViewModel*) mm);
     }
-    else if (propName == CONFIG_LABEL_CPU_LOWBND)
-    {
-        mm->setComputationsThresshold(event.GetPropertyValue().GetLong());
-    }
-    else if (propName == CONFIG_LABEL_CPU_HWC)
-    {
-        auto index = event.GetPropertyValue();
-        std::string hwc_t(event.GetProperty()->ValueToString(index));
-        mm->setHWCColumnType(hwc_t);
-    }
-    // TODO : Whenever the model is updated, the expanded/collapsed items state
-    // should be gathered in order to restore the current state when model is
-    // showed again through the control.
-    //
-    //mm->Cleared();
-    dataviewtree_pseudocode->AssociateModel((wxDataViewModel*) mm);
 }
+
+
+/*
+ * wxEVT_COMMAND_SLIDER_UPDATED event handler for ID_SLIDER
+ */
+
+void Structuredetection::OnIterationSliderUpdated( wxCommandEvent& event )
+{
+    if (this->loop_iterations_slider_max->GetValue() < event.GetInt())
+        this->loop_iterations_slider_max->SetValue(event.GetInt());
+}
+
+
+/*
+ * wxEVT_COMMAND_SLIDER_UPDATED event handler for ID_SLIDER1
+ */
+
+void Structuredetection::OnIterationMaxSliderUpdated( wxCommandEvent& event )
+{
+    if (this->loop_iterations_slider->GetValue() > event.GetInt())
+        this->loop_iterations_slider->SetValue(event.GetInt());
+}
+

@@ -36,6 +36,7 @@ class GeneralConfigField
     public:
         virtual std::string getName() = 0;
         virtual void* getManager() = 0;
+        virtual void setValuep(void* ptr) = 0;
 };
 
 template<class T> 
@@ -43,9 +44,10 @@ class ConfigField : public GeneralConfigField
 {
     public:
         ConfigField() {};
-        ConfigField(std::string name, T df)
+        ConfigField(std::string name, T df, T* p)
             : name(name)
-            , df(df) {}
+            , df(df)
+            , p(p) {}
         ConfigField(std::string name, T df, void(*setter)(T&))
             : name(name)
             , df(df)
@@ -56,20 +58,22 @@ class ConfigField : public GeneralConfigField
             { return this->name; }
         void setValue(T &v)
             { this->setter(v); }
-        
-        virtual void* getManager()
-        { 
-            return myGetManager(this->getDefault()); 
-        }
-
-        void* myGetManager(T df)
+        void setValuep(void* ptr)
         {
-            return NULL;
+            T* pp = static_cast<T*>(ptr);
+            *(this->p) = *pp;
         }
+        virtual void* getManager()
+            { return myGetManager(this->getDefault()); }
+        void* myGetManager(T df)
+            { return NULL; }
+        void* getPointer()
+            { return this->p; }
     private:
         std::string name;
         T df;
         void(*setter)(T&);
+        T* p;
 };
 
 class PipelineStageGeneral
@@ -107,9 +111,9 @@ class PipelineStageGeneral
             ConfigField<T> new_cf(name,df,setter);
             this->config_fields.push_back(new_cf);
         }
-        template <class T> void addConfigField(std::string name, T df)
+        template <class T> void addConfigField(std::string name, T df, T* p)
         {
-            ConfigField<T> *new_cf = new ConfigField<T>(name,df);
+            ConfigField<T> *new_cf = new ConfigField<T>(name,df,p);
             this->config_fields.push_back(new_cf);
         }
         std::vector<GeneralConfigField*> getConfFields()

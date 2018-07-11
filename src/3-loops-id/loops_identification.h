@@ -132,8 +132,10 @@ class LoopsIdentification : public PipelineStage<UniqueMpiVector, LoopVector>
             , eps(eps)
             , minPts(minPts) 
     {
-        this->addConfigField<float>("loops eps", eps);
-        this->addConfigField<int>("loops minPts", minPts);
+        this->addConfigField<float>("loops eps", eps, 
+                (float*)&(this->eps));
+        this->addConfigField<int>("loops minPts", minPts, 
+                (int*)&(this->minPts));
     };
     private:
         double eps;

@@ -54,8 +54,10 @@ class LoopsMerge : public PipelineStage<LoopVector, TopLevelLoopVector>
             , minPts(minPts)
             , texe(texe) 
         {
-            this->addConfigField<float>("deltas eps", eps);
-            this->addConfigField<int>("deltas minPts", minPts);
+            this->addConfigField<float>("deltas eps", eps, 
+                    (float*)&(this->eps));
+            this->addConfigField<int>("deltas minPts", minPts, 
+                    (int*)&(this->minPts));
         }
         unsigned int getNPhases()
             { return this->nphases; }
