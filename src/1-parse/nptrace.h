@@ -21,7 +21,10 @@ class NPTrace : public PipelineStage<std::string, NPRecord>
         NPTrace() 
             : PipelineStage<std::string, NPRecord>("Parsing", false, true)
             , init(false) 
-            , first_record_after_reorder(NULL) {};
+            , first_record_after_reorder(NULL) 
+    {
+        this->addConfigField<float>("Alias tolerance", 0.1);
+    };
     private:
         void actual_run(std::string *trace_file);
         void readHeader(std::string header);

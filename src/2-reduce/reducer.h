@@ -43,6 +43,12 @@ class Reducer : public PipelineStage<NPRecord, UniqueMpiVector>
             last_mpicall = std::vector<MPICall>(ntasks);
             last_cpu_burst = std::vector<CPUBurst>(ntasks);
             comm_match = std::vector<CommMap>(ntasks);
+
+            this->addConfigField<float>("Lower bound", lb);
+        }
+        void setLowerBound(float& lb)
+        {
+            this->lbound = lb;
         }
     private:
         void process(NPEvent *event);

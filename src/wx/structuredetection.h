@@ -30,6 +30,8 @@
 #include <UIParaverTraceConfig.h>
 #include <ParaverInterface.h>
 
+#include <pipeline.h>
+
 /*!
  * Forward declarations
  */
@@ -41,6 +43,11 @@ class wxDataViewCtrl;
 class wxPropertyGrid;
 class wxBoxSizer;
 ////@end forward declarations
+class NPTrace; 
+class Reducer;
+class LoopsIdentification;
+class LoopsMerge;
+class Pseudocode;
 
 /*!
  * Control identifiers
@@ -62,12 +69,6 @@ class wxBoxSizer;
 #define ID_TREECTRL 10001
 #define ID_PROPGRID 10023
 #define ID_PANEL1 10015
-#define ID_PANEL 10003
-#define ID_CHECKBOX 10007
-#define ID_TEXTCTRL1 10008
-#define ID_COMBOCTRL 10022
-#define ID_TEXTCTRL 10004
-#define ID_BUTTON 10009
 #define ID_SLIDER 10024
 #define ID_BUTTON1 10025
 #define ID_BUTTON2 10026
@@ -89,66 +90,17 @@ class wxBoxSizer;
 #define CONFIG_LABEL_CPU_LOWBND "Burst low-bound"
 #define CONFIG_LABEL_CPU_HWC "Burst HWC"
 
-typedef std::tuple<
-    std::string,        // type
-    std::string,        // label
-    void(*)(void*),     // getter
-    void(*)(void*)      // setter
-    > ConfigField;
+#define CONFIG_LABEL_PIPELINE "Pipeline"
 
-/*
-template<class T>
-class ItemConfiguration
-{
-    public:
-        ItemConfiguration(std::string label, (T)(*getter)(void), 
-                (void)(*setter)(T))
-            : label(label)
-            , default(default)
-            , cb(f)
-        {
-            this->generatePropGridItem();
-        }
-        setValue(T value)
-            { this->setter(value); }
-        T getValue()
-            { this->getter(); }
-        wxPGProperty* generatePropGridItem<bool>()
-        {
-            return new wxBoolProperty(this->label, wxPG_LABEL, this->default);
-        }
-        wxPGProperty* generatePropGridItem<int>()
-        {
-            return new wxIntProperty(this->label, wxPG_LABEL, this->default);
-        }
-        wxPGProperty* generatePropGridItem<float>()
-        {
-            return new wxFloatProperty(this->label, wxPG_LABEL, this->default);
-        }
-        wxPGProperty* generatePropGridItem<std::string>()
-        {
-            return new wxLongStringProperty(this->label, wxPG_LABEL, this->default);
-        }
-        wxPGProperty* generatePropGridItem<std::vector<std::string>>()
-        {
-            return new wxArrayStringProperty(this->label, wxPG_LABEL, this->default);
-        }
-    private:
-        std::string label;
-        std::string type;
-        T default;
-        confCallBack cb;
-        (T)(*getter)(void);
-        (void)(*setter)(T);
+#define DATAVIEW_COLUMN_0_NAME "Pseudocode"
+#define DATAVIEW_COLUMN_1_NAME "Duration"
+#define DATAVIEW_COLUMN_2_NAME "Msg Size"
+#define DATAVIEW_COLUMN_3_NAME "HWC"
 
-};
-
-class Configuration 
-{
-    public:
-        newConfGroup(std::string name, std::vector<ConfigField> fields)
-};
-*/
+#define DATAVIEW_COLUMN_0_SIZE 200
+#define DATAVIEW_COLUMN_1_SIZE 100
+#define DATAVIEW_COLUMN_2_SIZE DATAVIEW_COLUMN_1_SIZE
+#define DATAVIEW_COLUMN_3_SIZE DATAVIEW_COLUMN_1_SIZE
 
 /*!
  * Structuredetection class declaration
@@ -170,6 +122,13 @@ private:
     std::string gnuplot_script;
     void* selected_loop = NULL;
     bool timeline_already_opened = false;
+
+    // Pipeline phases
+    NPTrace* parser;
+    Reducer* reducer;
+    LoopsIdentification* loops_id;
+    LoopsMerge* loops_merge;
+    Pseudocode* pseudocode;
 
 public:
     /// Constructors
@@ -213,15 +172,6 @@ public:
     /// wxEVT_UPDATE_UI event handler for ID_TREECTRL
     void OnTreectrlUpdate( wxUpdateUIEvent& event );
 
-    /// wxEVT_COMMAND_CHECKBOX_CLICKED event handler for ID_CHECKBOX
-    void OnShowComputationsCheckboxClick( wxCommandEvent& event );
-
-    /// wxEVT_COMMAND_COMBOBOX_SELECTED event handler for ID_COMBOCTRL
-    void OnHWCComboctrlSelected( wxCommandEvent& event );
-
-    /// wxEVT_COMMAND_BUTTON_CLICKED event handler for ID_BUTTON
-    void OnFilterButtonClick( wxCommandEvent& event );
-
     /// wxEVT_COMMAND_CHECKBOX_CLICKED event handler for ID_CHECKBOX1
     void OnSpecificIterationCheckboxClick( wxCommandEvent& event );
 
@@ -251,10 +201,6 @@ public:
     wxDataViewCtrl* dataviewtree_pseudocode;
     wxPropertyGrid* configuration_propgrid;
     wxPanel* info_panel;
-    wxScrolledWindow* config_panel;
-    wxTextCtrl* burst_threshold_text;
-    wxComboBox* hwc_combobox;
-    wxTextCtrl* rank_filter_text;
     wxSlider* loop_iterations_slider;
     wxButton* loop_iterations_min;
     wxButton* loop_iterations_max;

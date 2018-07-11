@@ -31,6 +31,47 @@ class LogReporter
         virtual void addMessage(std::string msg) = 0;
 };
 
+class GeneralConfigField
+{
+    public:
+        virtual std::string getName() = 0;
+        virtual void* getManager() = 0;
+};
+
+template<class T> 
+class ConfigField : public GeneralConfigField
+{
+    public:
+        ConfigField() {};
+        ConfigField(std::string name, T df)
+            : name(name)
+            , df(df) {}
+        ConfigField(std::string name, T df, void(*setter)(T&))
+            : name(name)
+            , df(df)
+            , setter(setter) {}
+        T getDefault()
+            { return this->df; }
+        virtual std::string getName()
+            { return this->name; }
+        void setValue(T &v)
+            { this->setter(v); }
+        
+        virtual void* getManager()
+        { 
+            return myGetManager(this->getDefault()); 
+        }
+
+        void* myGetManager(T df)
+        {
+            return NULL;
+        }
+    private:
+        std::string name;
+        T df;
+        void(*setter)(T&);
+};
+
 class PipelineStageGeneral
 {
     public:
@@ -60,6 +101,21 @@ class PipelineStageGeneral
             { this->progress_reporter = pr; }
         void setLogReporter(LogReporter* lr)
             { this->log_reporter = lr; }
+        template <class T> void addConfigField(std::string name, 
+                T df, void(*setter)(T&))
+        {
+            ConfigField<T> new_cf(name,df,setter);
+            this->config_fields.push_back(new_cf);
+        }
+        template <class T> void addConfigField(std::string name, T df)
+        {
+            ConfigField<T> *new_cf = new ConfigField<T>(name,df);
+            this->config_fields.push_back(new_cf);
+        }
+        std::vector<GeneralConfigField*> getConfFields()
+            { return this->config_fields; }
+        std::string getPhaseName()
+            { return this->phasename; }
     protected:
         bool msg_printed;
         bool prev_done;
@@ -71,6 +127,7 @@ class PipelineStageGeneral
         PipelineStageGeneral* next_stage;
         ProgressReporter* progress_reporter;
         LogReporter* log_reporter;
+        std::vector<GeneralConfigField*> config_fields;
 };
 
 template <class T1,class T2>

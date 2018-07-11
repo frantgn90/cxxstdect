@@ -34,6 +34,7 @@
 
 ////@begin includes
 #include "wx/dataview.h"
+#include "wx/propgrid/propgrid.h"
 ////@end includes
 
 // Loading dialog
@@ -49,6 +50,27 @@
 #include "../../../paraver/git/wxparaver/icons/new_window.xpm"
 #include "../../../paraver/git/wxparaver/icons/delete.xpm"
 ////@end XPM images
+
+
+//
+// Specialized functions for ConfigField
+//
+
+template<> void* ConfigField<float>::myGetManager(float df)
+{
+    return (void *)new wxFloatProperty(this->getName(), 
+            wxPG_LABEL, this->getDefault());
+}
+template<> void* ConfigField<int>::myGetManager(int df)
+{
+    return (void *)new wxIntProperty(this->getName(), 
+            wxPG_LABEL, this->getDefault());
+}
+template<> void* ConfigField<std::string>::myGetManager(std::string df)
+{
+    return (void *)new wxStringProperty(this->getName(), 
+            wxPG_LABEL, this->getDefault());
+}
 
 /*
  * Structuredetection type definition
@@ -72,9 +94,6 @@ BEGIN_EVENT_TABLE( Structuredetection, wxFrame )
     EVT_MENU( ID_TOOL5, Structuredetection::OnShowClusteringButtonClick )
     EVT_MENU( wxID_EXIT, Structuredetection::OnExitClick )
     EVT_UPDATE_UI( ID_TREECTRL, Structuredetection::OnTreectrlUpdate )
-    EVT_CHECKBOX( ID_CHECKBOX, Structuredetection::OnShowComputationsCheckboxClick )
-    EVT_COMBOBOX( ID_COMBOCTRL, Structuredetection::OnHWCComboctrlSelected )
-    EVT_BUTTON( ID_BUTTON, Structuredetection::OnFilterButtonClick )
     EVT_CHECKBOX( ID_CHECKBOX1, Structuredetection::OnSpecificIterationCheckboxClick )
     EVT_BUTTON( ID_BITMAPBUTTON, Structuredetection::OnParaverShowClick )
 ////@end Structuredetection event table entries
@@ -114,7 +133,7 @@ bool Structuredetection::Create( wxWindow* parent, wxWindowID id, const wxString
     if (FindWindow(ID_SASHWINDOW))
         ((wxSplitterWindow*) FindWindow(ID_SASHWINDOW))->SetSashPosition(-60);
     if (FindWindow(ID_SPLITTERWINDOW))
-        ((wxSplitterWindow*) FindWindow(ID_SPLITTERWINDOW))->SetSashPosition(-220);
+        ((wxSplitterWindow*) FindWindow(ID_SPLITTERWINDOW))->SetSashPosition(-250);
 ////@end Structuredetection creation
     return true;
 }
@@ -145,10 +164,6 @@ void Structuredetection::Init()
     dataviewtree_pseudocode = NULL;
     configuration_propgrid = NULL;
     info_panel = NULL;
-    config_panel = NULL;
-    burst_threshold_text = NULL;
-    hwc_combobox = NULL;
-    rank_filter_text = NULL;
     loop_iterations_slider = NULL;
     loop_iterations_min = NULL;
     loop_iterations_max = NULL;
@@ -228,112 +243,68 @@ void Structuredetection::CreateControls()
     configuration_propgrid = new wxPropertyGrid( main_split, ID_PROPGRID, wxDefaultPosition, wxSize(100, 100), wxNO_BORDER );
     configuration_propgrid->SetName(wxT("configurations_propgrid"));
 
-    main_split->SplitVertically(dataviewtree_pseudocode, configuration_propgrid, -220);
+    main_split->SplitVertically(dataviewtree_pseudocode, configuration_propgrid, -250);
     info_panel = new wxPanel( main_hsplit, ID_PANEL1, wxDefaultPosition, wxDefaultSize, wxNO_BORDER|wxHSCROLL|wxTAB_TRAVERSAL );
     info_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
-    config_panel = new wxScrolledWindow( info_panel, ID_PANEL, wxDefaultPosition, wxDefaultSize, wxNO_BORDER|wxHSCROLL|wxTAB_TRAVERSAL );
-    config_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
-    config_panel->Show(false);
-    config_panel->SetScrollbars(1, 1, 0, 0);
+    wxBoxSizer* itemBoxSizer21 = new wxBoxSizer(wxVERTICAL);
+    info_panel->SetSizer(itemBoxSizer21);
+
     wxBoxSizer* itemBoxSizer22 = new wxBoxSizer(wxHORIZONTAL);
-    config_panel->SetSizer(itemBoxSizer22);
-
-    wxCheckBox* itemCheckBox23 = new wxCheckBox( config_panel, ID_CHECKBOX, _("Show CPU bursts"), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT );
-    itemCheckBox23->SetValue(false);
-    itemBoxSizer22->Add(itemCheckBox23, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-
-    wxStaticText* itemStaticText24 = new wxStaticText( config_panel, wxID_STATIC, _("T >"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer22->Add(itemStaticText24, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-
-    burst_threshold_text = new wxTextCtrl( config_panel, ID_TEXTCTRL1, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-    burst_threshold_text->Enable(false);
-    itemBoxSizer22->Add(burst_threshold_text, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-
-    wxStaticLine* itemStaticLine26 = new wxStaticLine( config_panel, wxID_STATIC, wxDefaultPosition, wxSize(10, -1), wxLI_VERTICAL );
-    itemBoxSizer22->Add(itemStaticLine26, 0, wxGROW|wxALL, 5);
-
-    wxStaticText* itemStaticText27 = new wxStaticText( config_panel, wxID_STATIC, _("HWC"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer22->Add(itemStaticText27, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-
-    wxArrayString hwc_comboboxStrings;
-    hwc_combobox = new wxComboBox( config_panel, ID_COMBOCTRL, wxEmptyString, wxDefaultPosition, wxDefaultSize, hwc_comboboxStrings, wxCB_DROPDOWN );
-    itemBoxSizer22->Add(hwc_combobox, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-
-    wxStaticLine* itemStaticLine29 = new wxStaticLine( config_panel, wxID_STATIC, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
-    itemBoxSizer22->Add(itemStaticLine29, 0, wxGROW|wxALL, 5);
-
-    wxStaticText* itemStaticText30 = new wxStaticText( config_panel, wxID_STATIC, _("Rank filter"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer22->Add(itemStaticText30, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-
-    rank_filter_text = new wxTextCtrl( config_panel, ID_TEXTCTRL, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer22->Add(rank_filter_text, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-
-    wxStaticLine* itemStaticLine32 = new wxStaticLine( config_panel, wxID_STATIC, wxDefaultPosition, wxSize(10, -1), wxLI_VERTICAL );
-    itemBoxSizer22->Add(itemStaticLine32, 0, wxGROW|wxALL, 5);
-
-    wxButton* itemButton33 = new wxButton( config_panel, ID_BUTTON, _("Apply"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer22->Add(itemButton33, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-
-    config_panel->FitInside();
-    wxBoxSizer* itemBoxSizer34 = new wxBoxSizer(wxVERTICAL);
-    info_panel->SetSizer(itemBoxSizer34);
-
-    wxBoxSizer* itemBoxSizer35 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer34->Add(itemBoxSizer35, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
+    itemBoxSizer21->Add(itemBoxSizer22, 0, wxALIGN_CENTER_HORIZONTAL|wxALL, 5);
     loop_iterations_slider = new wxSlider( info_panel, ID_SLIDER, 0, 0, 100, wxDefaultPosition, wxSize(200, -1), wxSL_AUTOTICKS|wxSL_LABELS|wxSL_LEFT|wxNO_BORDER );
     loop_iterations_slider->Enable(false);
-    itemBoxSizer35->Add(loop_iterations_slider, 0, wxGROW|wxALL, 0);
+    itemBoxSizer22->Add(loop_iterations_slider, 0, wxGROW|wxALL, 0);
 
     loop_iterations_min = new wxButton( info_panel, ID_BUTTON1, _("Min"), wxDefaultPosition, wxDefaultSize, 0 );
     loop_iterations_min->Enable(false);
-    itemBoxSizer35->Add(loop_iterations_min, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer22->Add(loop_iterations_min, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
     loop_iterations_max = new wxButton( info_panel, ID_BUTTON2, _("Max"), wxDefaultPosition, wxDefaultSize, 0 );
     loop_iterations_max->Enable(false);
-    itemBoxSizer35->Add(loop_iterations_max, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer22->Add(loop_iterations_max, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxStaticLine* itemStaticLine39 = new wxStaticLine( info_panel, wxID_STATIC, wxDefaultPosition, wxSize(20, -1), wxLI_VERTICAL );
-    itemBoxSizer35->Add(itemStaticLine39, 0, wxGROW|wxALL, 5);
+    wxStaticLine* itemStaticLine26 = new wxStaticLine( info_panel, wxID_STATIC, wxDefaultPosition, wxSize(20, -1), wxLI_VERTICAL );
+    itemBoxSizer22->Add(itemStaticLine26, 0, wxGROW|wxALL, 5);
 
     loop_specific_iteration = new wxCheckBox( info_panel, ID_CHECKBOX1, _("Specific iteration"), wxDefaultPosition, wxDefaultSize, 0 );
     loop_specific_iteration->SetValue(false);
-    itemBoxSizer35->Add(loop_specific_iteration, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer22->Add(loop_specific_iteration, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxButton* itemButton41 = new wxButton( info_panel, ID_BITMAPBUTTON, _("Show in Paraver"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer35->Add(itemButton41, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxButton* itemButton28 = new wxButton( info_panel, ID_BITMAPBUTTON, _("Show in Paraver"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer22->Add(itemButton28, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxBoxSizer* itemBoxSizer42 = new wxBoxSizer(wxHORIZONTAL);
-    itemBoxSizer34->Add(itemBoxSizer42, 1, wxGROW|wxALL, 5);
-    wxStaticBox* itemStaticBoxSizer43Static = new wxStaticBox(info_panel, wxID_ANY, _("General info"));
-    wxStaticBoxSizer* itemStaticBoxSizer43 = new wxStaticBoxSizer(itemStaticBoxSizer43Static, wxHORIZONTAL);
-    itemStaticBoxSizer43Static->Show(false);
-    itemBoxSizer42->Add(itemStaticBoxSizer43, 0, wxALIGN_TOP|wxALL, 5);
-    wxBoxSizer* itemBoxSizer44 = new wxBoxSizer(wxHORIZONTAL);
-    itemStaticBoxSizer43->Add(itemBoxSizer44, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-    wxStaticText* itemStaticText45 = new wxStaticText( itemStaticBoxSizer43->GetStaticBox(), wxID_STATIC, _("N. Phases:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer44->Add(itemStaticText45, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxBoxSizer* itemBoxSizer29 = new wxBoxSizer(wxHORIZONTAL);
+    itemBoxSizer21->Add(itemBoxSizer29, 1, wxGROW|wxALL, 5);
+    wxStaticBox* itemStaticBoxSizer30Static = new wxStaticBox(info_panel, wxID_ANY, _("General info"));
+    wxStaticBoxSizer* itemStaticBoxSizer30 = new wxStaticBoxSizer(itemStaticBoxSizer30Static, wxHORIZONTAL);
+    itemStaticBoxSizer30Static->Show(false);
+    itemBoxSizer29->Add(itemStaticBoxSizer30, 0, wxALIGN_TOP|wxALL, 5);
+    wxBoxSizer* itemBoxSizer31 = new wxBoxSizer(wxHORIZONTAL);
+    itemStaticBoxSizer30->Add(itemBoxSizer31, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxStaticText* itemStaticText32 = new wxStaticText( itemStaticBoxSizer30->GetStaticBox(), wxID_STATIC, _("N. Phases:"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer31->Add(itemStaticText32, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    general_nphases_label = new wxStaticText( itemStaticBoxSizer43->GetStaticBox(), wxID_STATIC, _("2"), wxDefaultPosition, wxDefaultSize, 0 );
+    general_nphases_label = new wxStaticText( itemStaticBoxSizer30->GetStaticBox(), wxID_STATIC, _("2"), wxDefaultPosition, wxDefaultSize, 0 );
     general_nphases_label->SetFont(wxFont(10, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxT("Sans")));
-    itemBoxSizer44->Add(general_nphases_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer31->Add(general_nphases_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxBoxSizer* itemBoxSizer47 = new wxBoxSizer(wxHORIZONTAL);
-    itemStaticBoxSizer43->Add(itemBoxSizer47, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
-    wxStaticText* itemStaticText48 = new wxStaticText( itemStaticBoxSizer43->GetStaticBox(), wxID_STATIC, _("Deltas:"), wxDefaultPosition, wxDefaultSize, 0 );
-    itemBoxSizer47->Add(itemStaticText48, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxBoxSizer* itemBoxSizer34 = new wxBoxSizer(wxHORIZONTAL);
+    itemStaticBoxSizer30->Add(itemBoxSizer34, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    wxStaticText* itemStaticText35 = new wxStaticText( itemStaticBoxSizer30->GetStaticBox(), wxID_STATIC, _("Deltas:"), wxDefaultPosition, wxDefaultSize, 0 );
+    itemBoxSizer34->Add(itemStaticText35, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    general_deltas_label = new wxStaticText( itemStaticBoxSizer43->GetStaticBox(), wxID_STATIC, _("0,32; 0,4"), wxDefaultPosition, wxDefaultSize, 0 );
+    general_deltas_label = new wxStaticText( itemStaticBoxSizer30->GetStaticBox(), wxID_STATIC, _("0,32; 0,4"), wxDefaultPosition, wxDefaultSize, 0 );
     general_deltas_label->SetFont(wxFont(10, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxT("Sans")));
-    itemBoxSizer47->Add(general_deltas_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
+    itemBoxSizer34->Add(general_deltas_label, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5);
 
-    wxStaticBox* itemStaticBoxSizer50Static = new wxStaticBox(info_panel, wxID_ANY, _("Selection callstack"));
-    wxStaticBoxSizer* itemStaticBoxSizer50 = new wxStaticBoxSizer(itemStaticBoxSizer50Static, wxVERTICAL);
-    itemStaticBoxSizer50Static->Show(false);
-    itemBoxSizer42->Add(itemStaticBoxSizer50, 1, wxGROW|wxALL, 5);
-    callpath_panel = new wxPanel( itemStaticBoxSizer50->GetStaticBox(), ID_PANEL3, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+    wxStaticBox* itemStaticBoxSizer37Static = new wxStaticBox(info_panel, wxID_ANY, _("Selection callstack"));
+    wxStaticBoxSizer* itemStaticBoxSizer37 = new wxStaticBoxSizer(itemStaticBoxSizer37Static, wxVERTICAL);
+    itemStaticBoxSizer37Static->Show(false);
+    itemBoxSizer29->Add(itemStaticBoxSizer37, 1, wxGROW|wxALL, 5);
+    callpath_panel = new wxPanel( itemStaticBoxSizer37->GetStaticBox(), ID_PANEL3, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
     callpath_panel->SetExtraStyle(wxWS_EX_VALIDATE_RECURSIVELY);
     callpath_panel->Show(false);
-    itemStaticBoxSizer50->Add(callpath_panel, 1, wxALIGN_CENTER_HORIZONTAL|wxALL, 0);
+    itemStaticBoxSizer37->Add(callpath_panel, 1, wxALIGN_CENTER_HORIZONTAL|wxALL, 0);
     selected_item_callpath = new wxBoxSizer(wxVERTICAL);
     callpath_panel->SetSizer(selected_item_callpath);
 
@@ -359,26 +330,30 @@ void Structuredetection::CreateControls()
     // Adding columns to dataviewctrl
     wxDataViewTextRenderer *tr = new wxDataViewTextRenderer();
     tr->EnableMarkup();
-    wxDataViewColumn *column0 =
-        new wxDataViewColumn( "Pseudocode", tr, 0, 200, wxALIGN_LEFT,
-                wxDATAVIEW_COL_RESIZABLE );
-    wxDataViewTextRenderer *tr1 =
-        new wxDataViewTextRenderer( "double", wxDATAVIEW_CELL_INERT );
-    wxDataViewTextRenderer *tr2 =
-        new wxDataViewTextRenderer( "long", wxDATAVIEW_CELL_INERT );
-    wxDataViewTextRenderer *tr3 =
-        new wxDataViewTextRenderer( "long", wxDATAVIEW_CELL_INERT );
+    wxDataViewTextRenderer *tr1 = new wxDataViewTextRenderer( 
+            "double", wxDATAVIEW_CELL_INERT );
+    wxDataViewTextRenderer *tr2 = new wxDataViewTextRenderer( 
+            "long", wxDATAVIEW_CELL_INERT );
+    wxDataViewTextRenderer *tr3 = new wxDataViewTextRenderer( 
+            "long", wxDATAVIEW_CELL_INERT );
 
 
-    wxDataViewColumn *column1 =
-        new wxDataViewColumn( "Duration", tr2, 1, 115, wxALIGN_RIGHT,
-                wxDATAVIEW_COL_RESIZABLE );
-    wxDataViewColumn *column2 =
-        new wxDataViewColumn( "Msg. Size", tr3, 2, 115, wxALIGN_RIGHT,
-                wxDATAVIEW_COL_RESIZABLE );
-    wxDataViewColumn *column3 =
-        new wxDataViewColumn( "HWC", tr1, 3, 115, wxALIGN_RIGHT,
-                wxDATAVIEW_COL_RESIZABLE );
+    wxDataViewColumn *column0 = new wxDataViewColumn( 
+            DATAVIEW_COLUMN_0_NAME, tr, 0, 
+            DATAVIEW_COLUMN_0_SIZE, wxALIGN_LEFT,
+            wxDATAVIEW_COL_RESIZABLE );
+    wxDataViewColumn *column1 = new wxDataViewColumn( 
+            DATAVIEW_COLUMN_1_NAME, tr2, 1, 
+            DATAVIEW_COLUMN_1_SIZE, wxALIGN_RIGHT,
+            wxDATAVIEW_COL_RESIZABLE );
+    wxDataViewColumn *column2 = new wxDataViewColumn( 
+            DATAVIEW_COLUMN_2_NAME, tr3, 2, 
+            DATAVIEW_COLUMN_2_SIZE, wxALIGN_RIGHT,
+            wxDATAVIEW_COL_RESIZABLE );
+    wxDataViewColumn *column3 = new wxDataViewColumn( 
+            DATAVIEW_COLUMN_3_NAME, tr1, 3,
+            DATAVIEW_COLUMN_3_SIZE, wxALIGN_RIGHT,
+            wxDATAVIEW_COL_RESIZABLE );
 
     dataviewtree_pseudocode->AppendColumn(column0);
     dataviewtree_pseudocode->AppendColumn(column1);
@@ -596,16 +571,6 @@ void Structuredetection::OnInfoButtonClick( wxCommandEvent& event )
             this->info_panel, -60);
 }
 
-
-/*
- * wxEVT_COMMAND_CHECKBOX_CLICKED event handler for ID_CHECKBOX
- */
-
-void Structuredetection::OnShowComputationsCheckboxClick( wxCommandEvent& event )
-{
-    this->burst_threshold_text->Enable(event.IsChecked());
-}
-
 void Structuredetection::addLegendItem(std::vector<unsigned int>* ranks, 
         std::string rgb)
 {
@@ -712,55 +677,6 @@ void Structuredetection::setGeneralInfo(unsigned int nphases,
         deltas_str += std::to_string(it) + "% ";
     this->general_deltas_label->SetLabel(deltas_str);
 }
-
-/*
- * wxEVT_COMMAND_BUTTON_CLICKED event handler for ID_BUTTON
- */
-
-void Structuredetection::OnFilterButtonClick( wxCommandEvent& event )
-{
-    std::string rank_filter(this->rank_filter_text->GetLineText(0));
-    std::string delimiter(",");
-
-    size_t pos = 0;
-    size_t last_pos = 0;
-    std::vector<unsigned int> ranks;
-    if (rank_filter.size() > 0)
-    {
-        while (1) 
-        {
-            pos = rank_filter.find(delimiter, last_pos);
-            std::string token = rank_filter.substr(last_pos, pos-last_pos);
-            ranks.push_back(std::stoi(token));
-
-            last_pos = pos+1;
-            if (pos == std::string::npos)
-                break;
-        }
-    }
-
-    wxPseudocode* mm = static_cast<wxPseudocode*>(dataviewtree_pseudocode
-            ->GetModel());
-
-    if (this->burst_threshold_text->IsEnabled())
-    {
-        std::string th(this->burst_threshold_text->GetLineText(0));
-        mm->showComputations(true);
-        mm->setComputationsThresshold(std::atoll(th.c_str()));
-    }
-    else
-        mm->showComputations(false);
-
-    std::string hwc_type_name(std::string(this->hwc_combobox->GetString(
-                    this->hwc_combobox->GetSelection())));
-    mm->setHWCColumnType(hwc_type_name);
-
-    // Configure model
-    mm->setRanksFilter(ranks);
-    mm->Cleared();
-    dataviewtree_pseudocode->AssociateModel((wxDataViewModel*) mm);
-}
-
 
 /*
  * wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL6
@@ -873,43 +789,66 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
     wxWindowDisabler disableall(loading_dialog);
 
     // Declare all phases
-    NPTrace parser;
-    Reducer reducer(trace_info.texe, filter_lbound, trace_info.ntasks);
-    LoopsIdentification loops_id(eps, minPts);
-    LoopsMerge loops_merge(eps_tl, minPts_tl, trace_info.texe);
-    Pseudocode pseudocode(&trace_semantic);
+    parser = new NPTrace();
+    reducer = new Reducer(trace_info.texe, filter_lbound, trace_info.ntasks);
+    loops_id = new LoopsIdentification(eps, minPts);
+    loops_merge = new LoopsMerge(eps_tl, minPts_tl, trace_info.texe);
+    pseudocode = new Pseudocode(&trace_semantic);
 
-    parser.setProgressReporter(loading_dialog);
-    parser.setLogReporter(loading_dialog);
-    reducer.setLogReporter(loading_dialog);
-    loops_id.setLogReporter(loading_dialog);
-    loops_merge.setLogReporter(loading_dialog);
-    pseudocode.setLogReporter(loading_dialog);
+    std::vector<PipelineStageGeneral*> pipeline = { 
+        parser, reducer, loops_id, loops_merge, pseudocode };
 
+    // Connecting to reporters
+    parser->setProgressReporter(loading_dialog);
+    std::for_each(pipeline.begin(), pipeline.end(), 
+            [=](PipelineStageGeneral* p){ p->setLogReporter(loading_dialog); });
+
+
+    wxPGProperty* fine_tunning_root = configuration_propgrid->Append(
+            new wxPropertyCategory(CONFIG_LABEL_PIPELINE));
+
+    // Filling configuration panel
+    std::for_each(pipeline.begin(), pipeline.end(),
+            [=](PipelineStageGeneral* p){
+                configuration_propgrid->AppendIn(fine_tunning_root,
+                    new wxPropertyCategory(p->getPhaseName().c_str()));
+                for (auto it : p->getConfFields())
+                {
+                    configuration_propgrid->Append(
+                            static_cast<wxPGProperty*>(it->getManager()));
+                }
+            });
+            
     // Connect them
-    parser.connect(&reducer);
-    reducer.connect(&loops_id);
-    loops_id.connect(&loops_merge);
-    loops_merge.connect(&pseudocode);
+    for (int i=0; i<pipeline.size()-1; ++i)
+        pipeline[i]->connect(pipeline[i+1]);
 
     // Just run the first stage
-    parser.setInput(&tracefile);
-    parser.run();
+    pipeline[0]->setInput(&tracefile);
+    pipeline[0]->run();
 
-    this->gnuplot_script = loops_merge.getGNUPlotScript();
-    wxDataViewModel* model = (wxDataViewModel*)pseudocode.getResult();
+    /* Already done */
+
+    // GNUPlot script
+    this->gnuplot_script = loops_merge->getGNUPlotScript();
+
+    // Setting model for dataview control
+    wxDataViewModel* model = (wxDataViewModel*)pseudocode->getResult();
     this->SetAssociateModel(model);
+
+    // Show hwc by default
     static_cast<wxPseudocode*>(model)->setHWCColumnType(
             std::string(hwc_types[0]));
 
+    // Showing mpi ranks legend
     std::vector<std::pair<std::vector<unsigned int>*, std::string>> color_map;
-    color_map = pseudocode.getResult()->getColormap();
-
+    color_map = pseudocode->getResult()->getColormap();
     this->legend_panel_sizer->Clear();
     for (auto legend_item : color_map )
         this->addLegendItem(legend_item.first, legend_item.second);
 
-    this->setGeneralInfo(loops_merge.getNPhases(), loops_merge.getDeltas());
+    // Setting up general info
+    this->setGeneralInfo(loops_merge->getNPhases(), loops_merge->getDeltas());
 
     loading_dialog->WellDone();
     loading_dialog->ShowModal(); // block the execution
@@ -917,16 +856,6 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
     loading_dialog->Show(false);
     loading_dialog->Destroy();
 }
-
-
-/*
- * wxEVT_COMMAND_COMBOBOX_SELECTED event handler for ID_COMBOCTRL
- */
-
-void Structuredetection::OnHWCComboctrlSelected( wxCommandEvent& event )
-{
-}
-
 
 /*
  * wxEVT_COMMAND_MENU_SELECTED event handler for ID_TOOL5
@@ -1021,10 +950,14 @@ void Structuredetection::OnPGValueChanged(wxPropertyGridEvent& event)
     }
     else if (propName == CONFIG_LABEL_CPU_HWC)
     {
-        // TODO : What is this thing returning from dropdown property???
-        std::string hwc_t(event.GetPropertyValue());
+        auto index = event.GetPropertyValue();
+        std::string hwc_t(event.GetProperty()->ValueToString(index));
         mm->setHWCColumnType(hwc_t);
     }
-    mm->Cleared();
+    // TODO : Whenever the model is updated, the expanded/collapsed items state
+    // should be gathered in order to restore the current state when model is
+    // showed again through the control.
+    //
+    //mm->Cleared();
     dataviewtree_pseudocode->AssociateModel((wxDataViewModel*) mm);
 }

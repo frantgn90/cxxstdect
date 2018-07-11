@@ -52,7 +52,11 @@ class LoopsMerge : public PipelineStage<LoopVector, TopLevelLoopVector>
                     "Loops merge", false, false)
             , eps(eps)
             , minPts(minPts)
-            , texe(texe) {};
+            , texe(texe) 
+        {
+            this->addConfigField<float>("deltas eps", eps);
+            this->addConfigField<int>("deltas minPts", minPts);
+        }
         unsigned int getNPhases()
             { return this->nphases; }
         std::vector<unsigned int> getDeltas();
