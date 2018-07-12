@@ -1,0 +1,22 @@
+* TODO Core functionality
+  - [ ] Reverse merging for data conditions
+  - [ ] Fix superloop detection (not working well when execute cg.a.32)
+  - [ ] When MPI calls are filtered by rank, CPU burst info is not showed up
+* TODO Paraver interoperability
+  - [ ] Even w/o compressing times, the iterations boundaries are degrading
+    as bigger the iteration index is.
+  - [ ] Sometimes paraver does not appear. Look at 1s delay before send
+    signal.
+  - [ ] Get the proper boundaries when user selects a bunch of iterations.
+  - [ ] Program 'Max' and 'Min' buttons. These buttons should move the slider
+    to the longest and shortest iterations of the selected loop.
+  - [ ] When close paraver, it is not showed up again.
+* TODO Property grid
+  - [ ] Program 'Time units' and 'Size units'.
+  - [ ] Whenever a pipeline option is shown, a dialog should be launched
+    asking to user if pipeline should be re-runned.
+* TODO Dataview
+  - [ ] Save fold/unfold state before modify the model in order to restore
+    it after the model changes.
+  - [ ] Look at '+' and '-' buttons, they are not behaving well in some
+    situations.
