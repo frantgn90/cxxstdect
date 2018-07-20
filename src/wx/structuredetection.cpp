@@ -36,9 +36,8 @@
 #include "wx/dataview.h"
 #include "wx/propgrid/propgrid.h"
 ////@end includes
+#include <wx/msgdlg.h>
 
-// Loading dialog
-#include "loadingdialog.h"
 #include "structuredetection.h"
 
 ////@begin XPM images
@@ -352,11 +351,11 @@ void Structuredetection::CreateControls()
     wxDataViewTextRenderer *tr = new wxDataViewTextRenderer();
     tr->EnableMarkup();
     wxDataViewTextRenderer *tr1 = new wxDataViewTextRenderer( 
-            "double", wxDATAVIEW_CELL_INERT );
+            "string", wxDATAVIEW_CELL_INERT );
     wxDataViewTextRenderer *tr2 = new wxDataViewTextRenderer( 
-            "long", wxDATAVIEW_CELL_INERT );
+            "string", wxDATAVIEW_CELL_INERT );
     wxDataViewTextRenderer *tr3 = new wxDataViewTextRenderer( 
-            "long", wxDATAVIEW_CELL_INERT );
+            "string", wxDATAVIEW_CELL_INERT );
 
 
     wxDataViewColumn *column0 = new wxDataViewColumn( 
@@ -383,16 +382,16 @@ void Structuredetection::CreateControls()
 
     // Fill the configuration wxPropertyGrid with general configs
     wxArrayString time_units;
-    time_units.Add("ns");
-    time_units.Add("us");
-    time_units.Add("ms");
-    time_units.Add("s");
+    time_units.Add(TIME_UNITS_NS);
+    time_units.Add(TIME_UNITS_US);
+    time_units.Add(TIME_UNITS_MS);
+    time_units.Add(TIME_UNITS_S);
     
     wxArrayString size_units;
-    size_units.Add("Byte");
-    size_units.Add("KByte");
-    size_units.Add("MByte");
-    size_units.Add("GByte");
+    size_units.Add(SIZE_UNITS_B);
+    size_units.Add(SIZE_UNITS_KB);
+    size_units.Add(SIZE_UNITS_MB);
+    size_units.Add(SIZE_UNITS_GB);
 
     configuration_propgrid->Append( new wxPropertyCategory("Main") );
     this->configuration_propgrid->Append(
@@ -405,6 +404,7 @@ void Structuredetection::CreateControls()
             new wxBoolProperty(CONFIG_LABEL_CPU_BURSTS, wxPG_LABEL, false));
     this->configuration_propgrid->Append(
             new wxIntProperty(CONFIG_LABEL_CPU_LOWBND, wxPG_LABEL, 0));
+    this->loading_dialog = new loadingDialog(NULL);
 }
 
 
@@ -712,7 +712,10 @@ void Structuredetection::OnOpenTraceClick( wxCommandEvent& event )
 void Structuredetection::SetAssociateModel(wxDataViewModel* model)
 {
     dataviewtree_pseudocode->AssociateModel(model);
-    this->dataviewtree_pseudocode->GetModel()->GetChildren(
+    //this->dataviewtree_pseudocode->GetModel()->GetChildren(
+    //        wxDataViewItem(0), 
+    //        last_level_items);
+    model->GetChildren(
             wxDataViewItem(0), 
             last_level_items);
 }
@@ -761,22 +764,25 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
 {
     if (this->tracefile == tracefile)
         return;
+    else
+    {
+        // TODO: Free all data of previous analysis
+    }
 
-    this->tracefile = tracefile;
+    this->tracefile = std::string(tracefile);
     this->eps = eps;
     this->minPts = minPts;
     this->eps_tl = eps_tl;
     this->minPts_tl = minPts_tl;
     this->filter_lbound = filter_lbound;
 
-    this->trace_file_path_text->SetValue(tracefile);
+    this->trace_file_path_text->SetValue(this->tracefile);
 
     trace_semantic.parse(paraver_pcf);
 
     std::vector<std::vector<unsigned int>> event_types = 
         trace_semantic.getGroupedEventTypes();
 
-    wxArrayString hwc_types;
     for (auto group : event_types)
         for (unsigned int type : group)
             if (type >= 42000000 and type < 43000000)
@@ -787,11 +793,10 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
     this->configuration_propgrid->Append(
             new wxEnumProperty(CONFIG_LABEL_CPU_HWC, wxPG_LABEL, hwc_types));
 
-    TraceHeader trace_info(tracefile);
-    paraver_interface = new ParaverInterface(tracefile, trace_info.texe);
+    TraceHeader trace_info(this->tracefile);
+    paraver_interface = new ParaverInterface(this->tracefile, trace_info.texe);
     
-    loadingDialog * loading_dialog = new loadingDialog(NULL);
-    loading_dialog->setTraceName(tracefile);
+    loading_dialog->setTraceName(this->tracefile);
     loading_dialog->Show(true);
     loading_dialog->Update();
 
@@ -800,17 +805,16 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
     wxWindowDisabler disableall(loading_dialog);
 
     // Declare all phases
-    parser = new NPTrace();
-    reducer = new Reducer(trace_info.texe, filter_lbound, trace_info.ntasks);
-    loops_id = new LoopsIdentification(eps, minPts);
-    loops_merge = new LoopsMerge(eps_tl, minPts_tl, trace_info.texe);
-    pseudocode = new Pseudocode(&trace_semantic);
-
-    std::vector<PipelineStageGeneral*> pipeline = { 
-        parser, reducer, loops_id, loops_merge, pseudocode };
+    pipeline = { 
+        new NPTrace(), 
+        new Reducer(trace_info.texe, filter_lbound, trace_info.ntasks), 
+        new LoopsIdentification(eps, minPts), 
+        new LoopsMerge(eps_tl, minPts_tl, trace_info.texe), 
+        new Pseudocode(&trace_semantic) 
+    };
 
     // Connecting to reporters
-    parser->setProgressReporter(loading_dialog);
+    pipeline[0]->setProgressReporter(loading_dialog);
     std::for_each(pipeline.begin(), pipeline.end(), 
             [=](PipelineStageGeneral* p){ p->setLogReporter(loading_dialog); });
 
@@ -835,37 +839,65 @@ void Structuredetection::run(std::string tracefile, std::string paraver_pcf,
         pipeline[i]->connect(pipeline[i+1]);
 
     // Just run the first stage
-    pipeline[0]->setInput(&tracefile);
+    pipeline[0]->setInput(&(this->tracefile));
     pipeline[0]->run();
 
     /* Already done */
 
+    // Showing mpi ranks legend
+    std::vector<std::pair<std::vector<unsigned int>*, std::string>> color_map;
+    color_map = static_cast<Pseudocode*>(pipeline[4])->getResult()->getColormap();
+    this->legend_panel_sizer->Clear();
+    for (auto legend_item : color_map )
+        this->addLegendItem(legend_item.first, legend_item.second);
+
+    this->postRunActions();
+
+    loading_dialog->WellDone();
+    //loading_dialog->ShowModal(); // block the execution
+    //loading_dialog->Show(false);
+    this->Layout();
+}
+
+void Structuredetection::partial_run(unsigned int from)
+{
+    assert(from < this->pipeline.size());
+    
+    loading_dialog->resetProgress();
+    loading_dialog->Show(true);
+    loading_dialog->Update();
+    
+    //wxWindowDisabler disableall(loading_dialog);
+    this->dataviewtree_pseudocode->AssociateModel(NULL);
+
+    for(unsigned int i=from; i<this->pipeline.size(); ++i)
+        this->pipeline[i]->clear();
+    this->pipeline[from]->run();
+    
+    this->postRunActions();
+
+    loading_dialog->WellDone();
+    //loading_dialog->ShowModal(); // block the execution
+    //loading_dialog->Show(false);
+}
+
+void Structuredetection::postRunActions()
+{
     // GNUPlot script
-    this->gnuplot_script = loops_merge->getGNUPlotScript();
+    this->gnuplot_script = static_cast<LoopsMerge*>(pipeline[3])->getGNUPlotScript();
 
     // Setting model for dataview control
-    wxDataViewModel* model = (wxDataViewModel*)pseudocode->getResult();
+    wxDataViewModel* model = (wxDataViewModel*)
+        static_cast<Pseudocode*>(pipeline[4])->getResult();
     this->SetAssociateModel(model);
 
     // Show hwc by default
     static_cast<wxPseudocode*>(model)->setHWCColumnType(
             std::string(hwc_types[0]));
 
-    // Showing mpi ranks legend
-    std::vector<std::pair<std::vector<unsigned int>*, std::string>> color_map;
-    color_map = pseudocode->getResult()->getColormap();
-    this->legend_panel_sizer->Clear();
-    for (auto legend_item : color_map )
-        this->addLegendItem(legend_item.first, legend_item.second);
-
     // Setting up general info
-    this->setGeneralInfo(loops_merge->getNPhases(), loops_merge->getDeltas());
-
-    loading_dialog->WellDone();
-    loading_dialog->ShowModal(); // block the execution
-
-    loading_dialog->Show(false);
-    loading_dialog->Destroy();
+    this->setGeneralInfo(static_cast<LoopsMerge*>(pipeline[3])->getNPhases(), 
+            static_cast<LoopsMerge*>(pipeline[3])->getDeltas());
 }
 
 /*
@@ -913,7 +945,9 @@ void Structuredetection::OnParaverShowClick( wxCommandEvent& event )
             GUILoop* l = static_cast<GUILoop*>(this->selected_loop);
             std::pair<unsigned int, unsigned int> it_bounds = 
                 l->getLoopObj()->getIterationsBounds(iteration-1);
-            this->paraver_interface->Zoom(it_bounds.first, it_bounds.second, 
+            std::pair<unsigned int, unsigned int> it_bounds_max = 
+                l->getLoopObj()->getIterationsBounds(iteration_max-1);
+            this->paraver_interface->Zoom(it_bounds.first, it_bounds_max.second, 
                     !this->timeline_already_opened);
             this->timeline_already_opened = true;
         }
@@ -961,11 +995,21 @@ void Structuredetection::OnPGValueChanged(wxPropertyGridEvent& event)
                 assert(false);
         }
         config_field->setValuep(new_value);
+        wxMessageDialog msgd(this, "Do you want the analysis to be re-executed"\
+                " with these new parameters?", "Message", wxYES_NO|wxNO_DEFAULT);
+        if (msgd.ShowModal() == wxID_YES )
+        {
+            // TODO : '0' should be the first stage to execute
+            this->partial_run(0); 
+        }
+        msgd.Destroy();
     }
     else // Main options (added by hand)
     {
         wxPseudocode* mm = static_cast<wxPseudocode*>(
                 dataviewtree_pseudocode->GetModel());
+        if (mm == NULL) return;
+
         wxString propName = event.GetPropertyName();
         if(propName == CONFIG_LABEL_MPI_FILTER)
         {
@@ -1004,6 +1048,20 @@ void Structuredetection::OnPGValueChanged(wxPropertyGridEvent& event)
             std::string hwc_t(event.GetProperty()->ValueToString(index));
             mm->setHWCColumnType(hwc_t);
         }
+        else if (propName == CONFIG_LABEL_SIZE_UNITS)
+        {
+
+            auto index = event.GetPropertyValue();
+            std::string size_units(event.GetProperty()->ValueToString(index));
+            mm->setSizeUnits(size_units);
+        }
+        else if (propName == CONFIG_LABEL_TIME_UNITS)
+        {
+            auto index = event.GetPropertyValue();
+            std::string time_units(event.GetProperty()->ValueToString(index));
+            mm->setTimeUnits(time_units);
+        }
+
         // TODO : Whenever the model is updated, the expanded/collapsed items state
         // should be gathered in order to restore the current state when model is
         // showed again through the control.

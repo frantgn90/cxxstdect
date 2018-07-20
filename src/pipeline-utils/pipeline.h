@@ -13,6 +13,7 @@
 #include <vector>
 #include <boost/timer.hpp>
 #include <iostream>
+#include <algorithm>
 
 #include <cxxabi.h>
 #include <execinfo.h>
@@ -91,16 +92,17 @@ class PipelineStageGeneral
             , log_reporter(NULL)
         {
         };
+
+        virtual void clear() {};
+        virtual void run() {};
+        virtual void setInput(void *) {};
+
         unsigned int getDuration() 
             { return duration; }
         bool withMR() 
             { return this->multirecv; }
         void connect(PipelineStageGeneral *next) 
-        { 
-            this->next_stage = next; 
-        }
-        virtual void run() {};
-        virtual void setInput(void *) {};
+            { this->next_stage = next; }
         void setProgressReporter(ProgressReporter* pr)
             { this->progress_reporter = pr; }
         void setLogReporter(LogReporter* lr)
@@ -206,10 +208,22 @@ class PipelineStage : public PipelineStageGeneral
             }
             this->duration = t.elapsed();
         }
+        void clear()
+        {
+            std::string msg = "Clearing phase: " + this->phasename;
+            this->log_reporter->addMessage(msg);
+            //delete input; // the input should be deleted by previous stage
+            //delete result; // every stage should clear its result
+            std::for_each(accum_result.begin(), accum_result.end(),
+                    [](T2* ptr){ delete ptr; });
+            this->actual_clear();
+            this->done = false;
+        }
     protected:
         T1* input;
         T2* result;
         std::vector<T2*> accum_result; // if no multirecv on target
+        bool abort_pipeline;
         void protected_actual_run(T1* input)
         {
             try
@@ -223,62 +237,12 @@ class PipelineStage : public PipelineStageGeneral
                     std::cout << msg << std::endl;
                 else
                     this->log_reporter->addMessage(msg);
-                backtrace();
                 exit(1);
-            }
-        }
-    
-        std::string demangle( const char* const symbol )
-        {
-            const std::unique_ptr< char, decltype( &std::free ) > demangled(
-                    abi::__cxa_demangle( symbol, 0, 0, 0 ), &std::free );
-            if( demangled ) {
-                return demangled.get();
-            }
-            else {
-                return symbol;
-            }
-        }
-
-        void backtrace()
-        {
-            // TODO: replace hardcoded limit?
-            void* addresses[ 256 ];
-            const int n = ::backtrace( addresses, 
-                    std::extent< decltype( addresses ) >::value );
-            const std::unique_ptr< char*, decltype( &std::free ) > symbols(
-                    ::backtrace_symbols( addresses, n ), &std::free );
-            for( int i = 0; i < n; ++i ) {
-                // we parse the symbols retrieved from backtrace_symbols() to
-                // extract the "real" symbols that represent the mangled names.
-                char* const symbol = symbols.get()[ i ];
-                char* end = symbol;
-                while( *end ) {
-                    ++end;
-                }
-                // scanning is done backwards, since the module name
-                // might contain both '+' or '(' characters.
-                while( end != symbol && *end != '+' ) {
-                    --end;
-                }
-                char* begin = end;
-                while( begin != symbol && *begin != '(' ) {
-                    --begin;
-                }
-
-                if( begin != symbol ) {
-                    std::cout << std::string( symbol, ++begin - symbol );
-                    *end++ = '\0';
-                    std::cout << demangle( begin ) << '+' << end;
-                }
-                else {
-                    std::cout << symbol;
-                }
-                std::cout << std::endl;
             }
         }
 
         virtual void actual_run(T1* input) {};
+        virtual void actual_clear() {};
 };
 
 

@@ -32,6 +32,9 @@
 
 #include <pipeline.h>
 
+// Loading dialog
+#include "loadingdialog.h"
+
 /*!
  * Forward declarations
  */
@@ -129,11 +132,9 @@ private:
     bool timeline_already_opened = false;
 
     // Pipeline phases
-    NPTrace* parser;
-    Reducer* reducer;
-    LoopsIdentification* loops_id;
-    LoopsMerge* loops_merge;
-    Pseudocode* pseudocode;
+    std::vector<PipelineStageGeneral*> pipeline;
+    loadingDialog * loading_dialog = NULL;
+    wxArrayString hwc_types;
 
 public:
     /// Constructors
@@ -237,6 +238,8 @@ public:
         double eps_tl, size_t minPts_tl,
         double filter_lbound);
     void run(std::string tracefile);
+    void partial_run(unsigned int from);
+    void postRunActions();
 };
 
 #endif

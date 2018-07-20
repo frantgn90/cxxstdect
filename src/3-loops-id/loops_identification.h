@@ -106,19 +106,35 @@ class Loop
         void digest(Loop* l);
         unsigned int getLongestIteration();
         unsigned int getShortestIteration();
+        ~Loop()
+        {
+            // WARNING : Shouldnt be freed here. This class is not creating them
+            //std::for_each(mpi_calls.begin(), mpi_calls.end(),
+            //        [](ReducedMPICall* ptr){ delete ptr; });
+            //mpi_calls.clear();
+            //std::for_each(subloops.begin(), subloops.end(),
+            //        [](Loop* ptr){ delete ptr; });
+            //subloops.clear();
+            std::for_each(aliased_loops.begin(), aliased_loops.end(),
+                    [](Loop* ptr){ delete ptr; });
+            aliased_loops.clear();
+            std::for_each(hidden_superloops.begin(), hidden_superloops.end(),
+                    [](Loop* ptr){ delete ptr; });
+            hidden_superloops.clear();
+        }
+
     private:
         arma::mat centroid;
         size_t loop_id;
+        Loop* superloop;
         std::vector<ReducedMPICall*> mpi_calls;
         std::vector<Loop*> subloops;
-        Loop* superloop;
         std::vector<Loop*> aliased_loops;
         std::vector<Loop*> hidden_superloops;
         int aliased_with;
         bool is_hidden_superloop;
         unsigned int hidden_superloop_iterations;
         std::vector<unsigned int>* tasks;
-
 };
 
 typedef std::vector<Loop> LoopVector;
@@ -141,6 +157,10 @@ class LoopsIdentification : public PipelineStage<UniqueMpiVector, LoopVector>
         double eps;
         size_t minPts;
         void actual_run(UniqueMpiVector *input);
+        void actual_clean()
+        {
+            this->result->clear();
+        }
         void aliasingAnalysis();
 };
 

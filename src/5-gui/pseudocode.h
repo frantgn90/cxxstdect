@@ -14,6 +14,17 @@
 #include<iostream>
 #include<wx/dataview.h>
 
+#define TIME_UNITS_NS "ns"
+#define TIME_UNITS_US "us"
+#define TIME_UNITS_MS "ms"
+#define TIME_UNITS_S  "s"
+
+
+#define SIZE_UNITS_B  "Byte"
+#define SIZE_UNITS_KB "KByte"
+#define SIZE_UNITS_MB "MByte"
+#define SIZE_UNITS_GB "GByte"
+
 // line, file, caller
 typedef std::tuple<unsigned int, std::string, std::string> Caller; 
 
@@ -86,6 +97,10 @@ class GUIReducedMPICall : public GUIRepresentation
         GUIReducedMPICall(
                 ReducedMPICall* mpicall,
                 libparaver::UIParaverTraceConfig* trace_semantic);
+        ~GUIReducedMPICall()
+        {
+            delete cpu_burst;
+        }
         std::string print();
         std::string getRepresentation()
             { return this->mpi_call_str + "()"; }
@@ -108,6 +123,12 @@ class GUILoop : public GUIRepresentation
     public:
         GUILoop(Loop* loop, 
                 libparaver::UIParaverTraceConfig* trace_semantic);
+        ~GUILoop()
+        {
+            std::for_each(statements.begin(), statements.end(),
+                    [](GUIRepresentation* ptr) { delete ptr; });
+            statements.clear();
+        }
         unsigned int getNIterations() const
             { return this->loop->getIterations(); }
         std::vector<GUIRepresentation*> getStatements() const
@@ -270,18 +291,53 @@ class wxPseudocode : public wxDataViewModel
             { this->computation_thresshold = th; }
         void setHWCColumnType(std::string hwc_column_type)
             { this->hwc_column_type = hwc_column_type; }
-
+        void setTimeUnits(std::string units)
+        {
+            if (units == TIME_UNITS_NS)
+                time_factor = 1;
+            else if (units == TIME_UNITS_US)
+                time_factor = (float)1/1000;
+            else if (units == TIME_UNITS_MS)
+                time_factor = (float)1/1000000;
+            else if (units == TIME_UNITS_S)
+                time_factor = (float)1/1000000000;
+            else
+                assert(false);
+            std::cout << this->time_factor << std::endl;
+        }
+        void setSizeUnits(std::string units)
+        {
+            if (units == SIZE_UNITS_B)
+                size_factor = 1;
+            else if (units == SIZE_UNITS_KB)
+                size_factor = (float)1/(1<<10);
+            else if (units == SIZE_UNITS_MB)
+                size_factor = (float)1/(1<<20);
+            else if (units == SIZE_UNITS_GB)
+                size_factor = (float)1/(1<<30);
+            else
+                assert(false);
+        }
+        ~wxPseudocode()
+        {
+            std::for_each(items.begin(), items.end(),
+                    [](wxPseudocodeItem* ptr) { delete ptr; });
+            items.clear();
+            roots.clear();
+        }
     private:
+        void parseChilds(wxPseudocodeItem* parent, GUILoop* loop);
+
         std::vector<wxPseudocodeItem*> roots;
         std::vector<wxPseudocodeItem*> items;
-        void parseChilds(wxPseudocodeItem* parent, GUILoop* loop);
-        std::vector<std::string> coltypes = { "string", "float", 
-            "float", "float" };
+        std::vector<std::string> coltypes = {"string","string","string","string"};
         std::vector<std::pair<std::vector<unsigned int>*, std::string>> color_map;
         std::vector<unsigned int> ranks_filter;
         bool show_computations;
         unsigned int computation_thresshold;
         std::string hwc_column_type;
+        float size_factor;
+        float time_factor;
 };
 
 class Pseudocode : public PipelineStage<TopLevelLoopVector, wxPseudocode>
@@ -295,8 +351,14 @@ class Pseudocode : public PipelineStage<TopLevelLoopVector, wxPseudocode>
         libparaver::UIParaverTraceConfig* trace_semantic;
         std::vector<GUILoop*> top_level_loops;
         void actual_run(TopLevelLoopVector* input);
-
-
+        void actual_clear()
+        {
+            //delete trace_semantic;
+            delete this->result;
+            std::for_each(top_level_loops.begin(), top_level_loops.end(),
+                    [](GUILoop* ptr){ delete ptr; });
+            top_level_loops.clear();
+        }
 };
 
 #endif /* !PSEUDOCODE_H */

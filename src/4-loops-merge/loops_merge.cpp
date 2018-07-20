@@ -56,10 +56,15 @@ void TopLevelLoop::merge()
 
 std::vector<unsigned int> LoopsMerge::getDeltas()
 {
-    std::vector<unsigned int> result;
-    for (auto it : *(this->result))
-        result.push_back(it.getDelta()*100);
-    return result;
+    std::vector<unsigned int> rr;
+    // WARNING : This C++ constructs creates an object copy and after its
+    // lifetime (1 iteration) it is destroyed. This destruction implies a
+    // pointer freed in such a way it is reachable from now and onward
+    //for (auto it : *(this->result))
+    //  rr.push_back(it.getDelta()*100);
+    for (int i=0; i<this->result->size(); ++i)
+        rr.push_back(this->result->at(i).getDelta()*100);
+    return rr;
 }
 
 void LoopsMerge::preparePlot(std::vector<Loop>* loops,
@@ -116,6 +121,15 @@ void LoopsMerge::actual_run(LoopVector *input)
     // First step is to classify loops by their delta
     mlpack::dbscan::DBSCAN<> dbscan(this->eps, this->minPts);
 
+    this->log_reporter->addMessage("Input size: " + std::to_string(input->size()));
+    if (input->size() == 0)
+    {
+        this->log_reporter->addMessage("No superloops can be detected");
+        this->result = new TopLevelLoopVector();
+        this->done = true;
+        return;
+    }
+
     arma::mat data(1,input->size()); // 2-dimensions
     arma::Row<size_t> assignements;
     arma::mat centroids;
@@ -127,11 +141,13 @@ void LoopsMerge::actual_run(LoopVector *input)
     size_t nclusters = dbscan.Cluster(data, assignements, centroids);
     this->preparePlot(input, centroids);
 
+    /****/
     //std::cout << "Loops: " << input->size() << std::endl;
     //std::cout << "Top level loops: " << nclusters << std::endl;
     //data.print("DATA: ");
     //assignements.print("ASSIGN: ");
     //centroids.print("CENTR: ");
+    /****/
 
     // Create the top level loops objects
     this->nphases = nclusters;

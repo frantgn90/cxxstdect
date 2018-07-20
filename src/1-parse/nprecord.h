@@ -23,7 +23,6 @@ class NPRecord
 {
     public:
         NPRecord(const std::string line);
-        //~NPRecord();
         static NPRecord *build(const std::string &line);
         unsigned int getTimestamp() { return this->timestamp; };
         unsigned int getTask() { return this->task_id; };

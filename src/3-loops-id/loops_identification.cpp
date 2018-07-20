@@ -284,6 +284,15 @@ void LoopsIdentification::actual_run(UniqueMpiVector *input)
 {
     mlpack::dbscan::DBSCAN<> dbscan(this->eps, this->minPts);
 
+    this->log_reporter->addMessage("Input size: " + std::to_string(input->size()));
+    if (input->size() == 0)
+    {
+        this->log_reporter->addMessage("No loops can be detected");
+        this->result = new LoopVector();
+        this->done = true;
+        return;
+    }
+
     arma::mat data(2, input->size()); // 2-dimensions
     arma::Row<size_t> assignements;
     arma::mat centroids;

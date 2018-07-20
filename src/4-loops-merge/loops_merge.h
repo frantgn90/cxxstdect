@@ -17,7 +17,17 @@ class TopLevelLoop
 {
     public:
         TopLevelLoop() 
-            : ntll(1) {};
+            : ntll(1)
+            , superloop(NULL) {};
+        ~TopLevelLoop()
+        {
+            // WARNING : Shouldnt be freed here, this class is not creating them
+            //if (superloop)
+            //    delete superloop;
+            //std::for_each(loops.begin(), loops.end(),
+            //        [](Loop* ptr){ delete ptr; });
+            //loops.clear();
+        }
         void merge();
         void insert(Loop *loop)
             { this->loops.push_back(loop); }
@@ -65,12 +75,17 @@ class LoopsMerge : public PipelineStage<LoopVector, TopLevelLoopVector>
         std::string getGNUPlotScript()
             { return this->gnuplot_script_file; }
     private:
+        void actual_run(LoopVector *input);
+        void actual_clear()
+        {
+            this->result->clear();
+        }
+        void preparePlot(std::vector<Loop>* loops, arma::mat centroids);
+
         unsigned int nphases;
         double eps;
         size_t minPts;
         unsigned int texe;
-        void actual_run(LoopVector *input);
-        void preparePlot(std::vector<Loop>* loops, arma::mat centroids);
         std::string clustering_data_file;
         std::string gnuplot_script_file;
 };

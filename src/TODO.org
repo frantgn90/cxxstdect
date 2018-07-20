@@ -1,7 +1,8 @@
 * TODO Core functionality
   - [ ] Reverse merging for data conditions
   - [ ] Fix superloop detection (not working well when execute cg.a.32)
-  - [ ] When MPI calls are filtered by rank, CPU burst info is not showed up
+  - [ ] Revise memory leakage. Reprogram all destructors of implemented
+    classes.
 * TODO Paraver interoperability
   - [ ] Even w/o compressing times, the iterations boundaries are degrading
     as bigger the iteration index is.
@@ -12,7 +13,7 @@
     to the longest and shortest iterations of the selected loop.
   - [ ] When close paraver, it is not showed up again.
 * TODO Property grid
-  - [ ] Program 'Time units' and 'Size units'.
+  - [X] Program 'Time units' and 'Size units'.
   - [ ] Whenever a pipeline option is shown, a dialog should be launched
     asking to user if pipeline should be re-runned.
 * TODO Dataview
@@ -20,3 +21,9 @@
     it after the model changes.
   - [ ] Look at '+' and '-' buttons, they are not behaving well in some
     situations.
+  - [X] Change '0' per '-'
+  - [ ] When MPI calls are filtered by rank, CPU burst info is not showed up
+  - [ ] Show callpath of every MPI call as a contextual panel(?) that pops-up
+    when user maintains mouse pointer over a given mpi call.
+* TODO GUI
+  - [ ] Legend is only shown when a resize of the windows is done.

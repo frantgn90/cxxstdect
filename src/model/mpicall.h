@@ -20,8 +20,9 @@ class RunLenghEncVector
     : public std::vector<std::pair<unsigned int,unsigned int>>
 {
     public:
-        RunLenghEncVector() 
-            : std::vector<std::pair<unsigned int,unsigned int>>() {}
+        RunLenghEncVector(float alias_tolerance = COMPRESS_EPS) 
+            : std::vector<std::pair<unsigned int,unsigned int>>()
+            , alias_tolerance(alias_tolerance) {}
         void push_back(unsigned int v);
         unsigned int getMean();
         unsigned int operator[](int i)
@@ -40,6 +41,8 @@ class RunLenghEncVector
             assert(false);
             //BOOST_ASSERT_MSG(false, msg.c_str());
         }
+    private:
+        float alias_tolerance;
 };
 
 class CPUBurst

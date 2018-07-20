@@ -138,15 +138,6 @@ GUILoop::GUILoop(Loop* loop,
 
     // ordenar this->statements por posicion en el codigo
     std::sort(this->statements.begin(), this->statements.end(), pA_comp());
-
-    // TODO: break up 'previous cpu burst' to new GUIRepresentation objects
-    /*for (auto it : this->statements)
-    {
-        if (!it->isLoop())
-        {
-            this->statement.insert(it->getGUICPUBurst());
-        }
-    }*/
 }
 
 std::ostream &operator<<(std::ostream &output, GUIRepresentation &r)
@@ -188,6 +179,8 @@ std::string GUILoop::print()
 wxPseudocode::wxPseudocode(std::vector<GUILoop*> top_level_loops)
     : show_computations(false)
     , computation_thresshold(0)
+    , time_factor(1)
+    , size_factor(1)
 {
     srand(123456);
     for (auto it : top_level_loops)
@@ -204,7 +197,7 @@ void wxPseudocode::parseChilds(wxPseudocodeItem* parent, GUILoop* loop)
 {
     for (auto it : loop->getStatements())
     {
-        std::string color_val;
+        std::string color_val = "000000";
         if (!it->isLoop())
         {
             GUIReducedMPICall* mpicall = static_cast<GUIReducedMPICall*>(it);
@@ -239,8 +232,6 @@ void wxPseudocode::parseChilds(wxPseudocodeItem* parent, GUILoop* loop)
                 color_map.push_back(make_pair(mpicall->getTasks(), color_val));
             }
         }
-        else
-            color_val = "000000"; // black by default
 
         std::string color = "#"+color_val; 
 
@@ -372,17 +363,49 @@ void wxPseudocode::GetValue(wxVariant &var, const wxDataViewItem& item,
     switch(col)
     {
         case 0:
-            var = pitem->GetPseudocode();
-            break;
+            {
+                var = pitem->GetPseudocode();
+                break;
+            }
         case 1:
-            var = (long int)pitem->GetDuration();
-            break;
+            {
+                float vt = (float)(pitem->GetDuration()*this->time_factor);
+                if (vt == 0)
+                    var = "-";
+                else
+                {
+                    std::ostringstream ss; ss.precision(2);
+                    ss << vt;
+                    var = ss.str().c_str();
+                }
+                break;
+            }
         case 2:
-            var = (long int)pitem->GetMsgSize();
-            break;
+            {
+                float vt = (float)(pitem->GetMsgSize()*this->size_factor);
+                if (vt == 0)
+                    var = "-";
+                else
+                {
+                    std::ostringstream ss; ss.precision(2);
+                    ss << vt;
+                    var = ss.str().c_str();
+                }
+                break;
+            }
         case 3:
-            var = pitem->GetHWC(this->hwc_column_type);
-            break;
+            {
+                float vt = pitem->GetHWC(this->hwc_column_type);
+                if (vt == 0)
+                    var = "-";
+                else
+                {
+                    std::ostringstream ss; ss.precision(2);
+                    ss << vt;
+                    var = ss.str().c_str();
+                }
+                break;
+            }
     }
     //assert(false);
 }
@@ -410,6 +433,9 @@ void Pseudocode::actual_run(TopLevelLoopVector* input)
     //for (int i=0; i<this->top_level_loops.size(); ++i)
     //    std::cout << this->top_level_loops[i];
     //std::cout << std::endl << "=======================" << std::endl;
-    
-    this->result = new wxPseudocode(this->top_level_loops);
+
+    if (input->size() == 0)
+        this->result = new wxPseudocode();
+    else
+        this->result = new wxPseudocode(this->top_level_loops);
 }

@@ -19,18 +19,19 @@ void RunLenghEncVector::push_back(unsigned int v)
     {
         std::vector<std::pair<unsigned int,unsigned int>>::push_back(
                 std::make_pair(1,v));
-        return;
     }
-
-    unsigned int lastv = this->back().second;
-    unsigned int ubound = ceil((float)lastv*(1+COMPRESS_EPS));
-    unsigned int bbound = ceil((float)lastv*(1-COMPRESS_EPS));
-
-    if (bbound <= v  and v <= ubound)
-        this->back().first += 1; // compressed
     else
-        std::vector<std::pair<unsigned int,unsigned int>>::push_back(
-                std::make_pair(1,v));
+    {
+        unsigned int lastv = this->back().second;
+        unsigned int ubound = ceil((float)lastv*(1+this->alias_tolerance));
+        unsigned int bbound = ceil((float)lastv*(1-this->alias_tolerance));
+
+        if (bbound <= v  and v <= ubound)
+            this->back().first += 1; // compressed
+        else
+            std::vector<std::pair<unsigned int,unsigned int>>::push_back(
+                    std::make_pair(1,v));
+    }
 }
 
 std::pair<unsigned int, unsigned int> pair_addition(
