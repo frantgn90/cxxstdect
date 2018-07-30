@@ -111,10 +111,10 @@ class Loop
             // WARNING : Shouldnt be freed here. This class is not creating them
             //std::for_each(mpi_calls.begin(), mpi_calls.end(),
             //        [](ReducedMPICall* ptr){ delete ptr; });
-            //mpi_calls.clear();
+            mpi_calls.clear();
             //std::for_each(subloops.begin(), subloops.end(),
             //        [](Loop* ptr){ delete ptr; });
-            //subloops.clear();
+            subloops.clear();
             std::for_each(aliased_loops.begin(), aliased_loops.end(),
                     [](Loop* ptr){ delete ptr; });
             aliased_loops.clear();
@@ -147,19 +147,26 @@ class LoopsIdentification : public PipelineStage<UniqueMpiVector, LoopVector>
                     "Loops indentification", false, false)
             , eps(eps)
             , minPts(minPts) 
-    {
-        this->addConfigField<float>("loops eps", eps, 
-                (float*)&(this->eps));
-        this->addConfigField<int>("loops minPts", minPts, 
-                (int*)&(this->minPts));
-    };
+        {
+            this->addConfigField<float>("loops eps", eps, 
+                    (float*)&(this->eps));
+            this->addConfigField<int>("loops minPts", minPts, 
+                    (int*)&(this->minPts));
+            this->debug = true;
+        };
+        virtual void print_result()
+        {
+            std::cout << "[DEBUG " << this->phasename << "] " 
+                << this->result->size() << " loops;" << std::endl;
+        }
     private:
         double eps;
         size_t minPts;
         void actual_run(UniqueMpiVector *input);
-        void actual_clean()
+        void actual_clear()
         {
             this->result->clear();
+            delete this->result;
         }
         void aliasingAnalysis();
 };

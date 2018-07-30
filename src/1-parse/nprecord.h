@@ -10,6 +10,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 #define STATEID '1'
 #define EVENTID '2'
@@ -41,7 +42,12 @@ class NPEvent : public NPRecord
 {
     public:
         NPEvent(const std::string line);
-        //~NPEvent();
+        /*~NPEvent()
+        {
+            std::cout << "event removed" << std::endl;
+            type.clear();
+            value.clear();
+        }*/
         int existEvent(const std::string type) const;
         std::pair<std::string, std::string> getEvent(int i);
         unsigned int getNEvents() { return this->type.size(); };

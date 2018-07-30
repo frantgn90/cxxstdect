@@ -123,7 +123,7 @@ private:
     std::string tracefile;
     ParaverInterface *paraver_interface;
     double filter_lbound = 0.1;
-    double eps = 0.1;
+    double eps = 0.01;
     size_t minPts = 1;
     double eps_tl = 0.1;
     size_t minPts_tl = 1;

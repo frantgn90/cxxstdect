@@ -50,8 +50,8 @@ void Reducer::close_mpi(NPEvent *event)
         }
         else
         {
-            NPComm* comm = this->comm_match[TID(event)].at(event->getTimestamp());
-            mpic.matchComm(comm->task_send_id, comm->size);
+            NPComm comm = this->comm_match[TID(event)].at(event->getTimestamp());
+            mpic.matchComm(comm.task_send_id, comm.size);
             this->comm_match[TID(event)].erase(event->getTimestamp());
         }
     }
@@ -123,7 +123,7 @@ void Reducer::process(NPComm *comm)
 
     // Save communication for recv partner matching
     this->comm_match[comm->task_recv_id-1].insert({
-            std::max(comm->logical_recv, comm->phyisical_recv), comm});
+            std::max(comm->logical_recv, comm->phyisical_recv), *comm});
 }
 
 void Reducer::process(NPStat *stat)

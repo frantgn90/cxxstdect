@@ -28,7 +28,7 @@
 #define STATE_RUN 1
 
 typedef std::unordered_map<unsigned int, ReducedMPICall> UniqueMpiMap;
-typedef std::unordered_map<unsigned int, NPComm*> CommMap;
+typedef std::unordered_map<unsigned int, NPComm> CommMap;
 typedef std::vector<ReducedMPICall> UniqueMpiVector;
 
 class Reducer : public PipelineStage<NPRecord, UniqueMpiVector>
@@ -48,9 +48,20 @@ class Reducer : public PipelineStage<NPRecord, UniqueMpiVector>
             this->addConfigField<float>("Lower bound", lb, &(this->lbound));
             this->addConfigField<float>("Alias tolerance", alias_tolerance, 
                     &(this->alias_tolerance));
+            this->debug = true;
         }
 
+        virtual void print_result()
+        {
+            std::cout << "[DEBUG " << this->phasename << "] " 
+                << this->result->size() << " unique mpi calls;" << std::endl;
 
+            /*
+            for (auto it : *(this->result))
+                std::cout << "  " << it.getRepetitions() << " : " 
+                    << it.getSignature() << std::endl;
+            */
+        }
     private:
         void process(NPEvent *event);
         void process(NPComm *comm);
@@ -65,9 +76,10 @@ class Reducer : public PipelineStage<NPRecord, UniqueMpiVector>
         void actual_clear()
         {
             this->result->clear();
+            //delete this->result;
 
-            unique_mpicalls.clear();
-            partial_result.clear();
+            //unique_mpicalls.clear();
+            this->partial_result.clear();
 
             int ntasks = last_mpicall.size();
             last_mpicall.clear();
@@ -80,7 +92,7 @@ class Reducer : public PipelineStage<NPRecord, UniqueMpiVector>
 
         }
 
-        UniqueMpiMap unique_mpicalls;
+        //UniqueMpiMap unique_mpicalls;
         UniqueMpiMap partial_result;
         float lbound;
         unsigned int texe;

@@ -133,6 +133,7 @@ class PipelineStageGeneral
         PipelineStageGeneral* next_stage;
         ProgressReporter* progress_reporter;
         LogReporter* log_reporter;
+        bool debug = false; // TODO : Should be configured by user
         std::vector<GeneralConfigField*> config_fields;
 };
 
@@ -229,6 +230,8 @@ class PipelineStage : public PipelineStageGeneral
             try
             {
                 this->actual_run(input);
+                if (debug and this->done)
+                    this->print_result();
             }
             catch(...)
             {
@@ -243,6 +246,7 @@ class PipelineStage : public PipelineStageGeneral
 
         virtual void actual_run(T1* input) {};
         virtual void actual_clear() {};
+        virtual void print_result() { printf("This is the virtual function."); };
 };
 
 

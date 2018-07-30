@@ -870,9 +870,10 @@ void Structuredetection::partial_run(unsigned int from)
     //wxWindowDisabler disableall(loading_dialog);
     this->dataviewtree_pseudocode->AssociateModel(NULL);
 
-    for(unsigned int i=from; i<this->pipeline.size(); ++i)
+    // TODO : Should be 'from' instead 0
+    for(unsigned int i=0; i<this->pipeline.size(); ++i)
         this->pipeline[i]->clear();
-    this->pipeline[from]->run();
+    this->pipeline[0]->run();
     
     this->postRunActions();
 

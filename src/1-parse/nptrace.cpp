@@ -115,6 +115,17 @@ void NPTrace::actual_run(std::string *trace_file)
         this->progress_reporter->addProgress(header.size());
         this->init = true;
     }
+    else if(this->result)
+    {
+
+        unsigned int event_type = this->result->getType();
+        if (event_type == PRV_STATE)
+            delete static_cast<NPStat*>(this->result);
+        else if (event_type == PRV_EVENT)
+            delete static_cast<NPEvent*>(this->result);
+        else if (event_type == PRV_COMM)
+            delete static_cast<NPComm*>(this->result);
+    }
 
     // Until reorder buffer is void
     if (this->reorder_buffer.size() > 0)

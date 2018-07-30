@@ -68,6 +68,12 @@ class LoopsMerge : public PipelineStage<LoopVector, TopLevelLoopVector>
                     (float*)&(this->eps));
             this->addConfigField<int>("deltas minPts", minPts, 
                     (int*)&(this->minPts));
+            this->debug = true;
+        }
+        virtual void print_result()
+        {
+            std::cout << "[DEBUG " << this->phasename << "] "
+                << this->result->size() << " top level loops;" << std::endl;
         }
         unsigned int getNPhases()
             { return this->nphases; }
@@ -79,6 +85,7 @@ class LoopsMerge : public PipelineStage<LoopVector, TopLevelLoopVector>
         void actual_clear()
         {
             this->result->clear();
+            delete this->result;
         }
         void preparePlot(std::vector<Loop>* loops, arma::mat centroids);
 
