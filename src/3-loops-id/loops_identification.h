@@ -115,14 +115,22 @@ class Loop
             //std::for_each(subloops.begin(), subloops.end(),
             //        [](Loop* ptr){ delete ptr; });
             subloops.clear();
-            std::for_each(aliased_loops.begin(), aliased_loops.end(),
-                    [](Loop* ptr){ delete ptr; });
+            // TODO : Aliased loops should be freed in somewhere
+            //std::for_each(aliased_loops.begin(), aliased_loops.end(),
+            //        [](Loop* ptr){ delete ptr; });
             aliased_loops.clear();
             std::for_each(hidden_superloops.begin(), hidden_superloops.end(),
                     [](Loop* ptr){ delete ptr; });
             hidden_superloops.clear();
         }
-
+        void sortMpiCalls()
+        {
+            // Sorted by first timestamp. Remember we do not have information
+            // about the position in code of every mpi call so this is the only
+            // way to sort them.
+            
+            std::sort(mpi_calls.begin(), mpi_calls.end(), pA_comp());
+        }
     private:
         arma::mat centroid;
         size_t loop_id;
@@ -135,6 +143,15 @@ class Loop
         bool is_hidden_superloop;
         unsigned int hidden_superloop_iterations;
         std::vector<unsigned int>* tasks;
+
+        struct pA_comp {
+            bool operator() (ReducedMPICall* left, ReducedMPICall* right) const 
+            { 
+               return left->getFirstTimestamp() < right->getFirstTimestamp();
+            }
+        };
+
+
 };
 
 typedef std::vector<Loop> LoopVector;
@@ -160,8 +177,8 @@ class LoopsIdentification : public PipelineStage<UniqueMpiVector, LoopVector>
                 << this->result->size() << " loops;" << std::endl;
         }
     private:
-        double eps;
-        size_t minPts;
+        float eps;
+        int minPts;
         void actual_run(UniqueMpiVector *input);
         void actual_clear()
         {

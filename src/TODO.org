@@ -27,3 +27,6 @@
     when user maintains mouse pointer over a given mpi call.
 * TODO GUI
   - [ ] Legend is only shown when a resize of the windows is done.
+* TODO Free aliased loops
+  - [ ] Aliased loops can not be freed by Loop destructure because SIGSEGV
+    appears. Think about where to free them.

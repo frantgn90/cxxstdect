@@ -99,20 +99,8 @@ bool Loop::isSubloopOf(Loop* l)
         and self_it_bounds.second < other_it_bounds.second;
 }
 
-struct pA_comp {
-    bool operator() (ReducedMPICall* left, ReducedMPICall* right) const 
-    { 
-       return left->getFirstTimestamp() < right->getFirstTimestamp();
-    }
-};
-
 bool Loop::isAliased(std::vector<ReducedMPICall*> mpi_calls, unsigned int deph)
 {
-    // Sorted by first timestamp. Remember we do not have information
-    // about the position in code of every mpi call so this is the only
-    // way to sort them.
-    std::sort(mpi_calls.begin(), mpi_calls.end(), pA_comp());
-
     unsigned int last_time = 0;
     std::vector<ReducedMPICall*> split;
 
@@ -264,9 +252,11 @@ void LoopsIdentification::aliasingAnalysis()
             else
                 newloops = it->getAliasedLoops();
 
-            aliased_loops.insert(aliased_loops.begin(), 
+            aliased_loops.insert(aliased_loops.end(), 
                     newloops.begin(), newloops.end());
 
+            // TODO : Currently Loop destructur is not freeing aliased loops.
+            // Think about where/when/how to do it.
             it = this->result->erase(it);
         }
         else
@@ -276,6 +266,7 @@ void LoopsIdentification::aliasingAnalysis()
     {
         this->result->push_back(*it);
     }
+
     //this->result->insert(this->result->end(),
     //        aliased_loops.begin(), aliased_loops.end());
 }
@@ -317,15 +308,13 @@ void LoopsIdentification::actual_run(UniqueMpiVector *input)
         data(1,i) = norm_iit;
     }
 
-    //data = arma::normalise(data,2,0);
-    //data = arma::normalise(data,2,1);
     size_t nclusters = dbscan.Cluster(data, assignements, centroids);
 
     /****/
-    //std::cout << nclusters << std::endl;
-    //data.print("DATA: ");
-    //assignements.print("ASSIGN: ");
-    //centroids.print("CENTR: ");
+    //std::cout << "NCLUSTERS: " << nclusters << std::endl;
+    //data.print("DATA " + this->phasename + ": ");
+    //assignements.print("ASSIGN " + this->phasename + ": ");
+    //centroids.print("CENTR " + this->phasename + ": ");
     /****/
     
     this->result = new LoopVector(nclusters);
@@ -337,6 +326,39 @@ void LoopsIdentification::actual_run(UniqueMpiVector *input)
         //arma::mat centroid = centroids[loop_id];
         //this->result->at(loop_id).setCentroid(centroid);
     }
+
+    for (int i=0; i<this->result->size(); ++i)
+        this->result->at(i).sortMpiCalls();
+
+    /*
+    for (auto loop : *(this->result))
+    {
+        std::cout << loop.getId() << " : " << loop.getIterations() << std::endl;
+        
+        for (int i=0; i<loop.getIterations(); ++i)
+            std::cout << loop.getMpiCalls()[0]->getTimestampAt(i) << ",";
+        //for (int i=0; i<loop.getMpiCalls().size(); ++i)
+        //    std::cout << loop.getMpiCalls()[i]->getSignature() << std::endl;
+        std::cout << std::endl << "=======" << std::endl;
+    }
+    */
     this->aliasingAnalysis();
+    /*
+    std::cout << "************" << std::endl;
+    for (auto loop : *(this->result))
+    {
+        std::cout << loop.getId() << " : " << loop.getIterations() << std::endl;
+        
+        for (int i=0; i<loop.getIterations(); ++i)
+            std::cout << loop.getMpiCalls()[0]->getTimestampAt(i) << ",";
+        //for (int i=0; i<loop.getMpiCalls().size(); ++i)
+        //    std::cout << loop.getMpiCalls()[i]->getSignature() << std::endl;
+        
+        std::cout << std::endl << "=======" << std::endl;
+    }
+    */
+    for (auto it : *(this->result))
+        assert(it.getIterations() > 0);
+
     this->done = true;
 }

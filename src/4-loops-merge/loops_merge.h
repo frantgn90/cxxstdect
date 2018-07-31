@@ -90,8 +90,8 @@ class LoopsMerge : public PipelineStage<LoopVector, TopLevelLoopVector>
         void preparePlot(std::vector<Loop>* loops, arma::mat centroids);
 
         unsigned int nphases;
-        double eps;
-        size_t minPts;
+        float eps;
+        int minPts;
         unsigned int texe;
         std::string clustering_data_file;
         std::string gnuplot_script_file;

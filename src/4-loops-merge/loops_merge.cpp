@@ -143,11 +143,10 @@ void LoopsMerge::actual_run(LoopVector *input)
     this->preparePlot(input, centroids);
 
     /****/
-    std::cout << "Loops: " << input->size() << std::endl;
-    std::cout << "Top level loops: " << nclusters << std::endl;
-    data.print("DATA: ");
-    assignements.print("ASSIGN: ");
-    centroids.print("CENTR: ");
+    //std::cout << "NCLUSTERS: " << nclusters << std::endl;
+    //data.print("DATA " + this->phasename + ": ");
+    //assignements.print("ASSIGN " + this->phasename + ": ");
+    //centroids.print("CENTR " + this->phasename + ": ");
     /****/
 
     // Create the top level loops objects
