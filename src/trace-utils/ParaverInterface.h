@@ -13,7 +13,7 @@
 class ParaverInterface
 {
     public:
-        ParaverInterface(std::string tracepath, unsigned int duration);
+        ParaverInterface(std::string tracepath, long long duration);
         void OpenTrace(std::string cfg="mpi/views/MPI_call.cfg");
         void Zoom(unsigned int from, unsigned int to, bool new_tl);
     private:
@@ -21,7 +21,7 @@ class ParaverInterface
         void knockParaver(unsigned int signal);
 
         std::string tracepath;
-        unsigned int traceduration;
+        long long traceduration;
         std::string paraload_file_name="/home/jmartinez/paraload.sig";
         std::string paraver_conf_files="/home/jmartinez/BSC/software/paraver/cfgs/";
         std::string paraver_configuration="mpi/views/MPI_call.cfg";

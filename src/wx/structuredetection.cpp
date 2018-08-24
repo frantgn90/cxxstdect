@@ -870,10 +870,18 @@ void Structuredetection::partial_run(unsigned int from)
     //wxWindowDisabler disableall(loading_dialog);
     this->dataviewtree_pseudocode->AssociateModel(NULL);
 
-    // TODO : Should be 'from' instead 0
-    for(unsigned int i=0; i<this->pipeline.size(); ++i)
+    // If a phase have multi-recv enabled, previous stage also must be 
+    // reexecuted
+    unsigned int first_stage = from;
+    while (this->pipeline[first_stage]->withMR())
+        first_stage--;
+
+    loading_dialog->addMessage("Re-starting execution from ["
+            + this->pipeline[first_stage]->getPhaseName() + "]");
+
+    for(unsigned int i=first_stage; i<this->pipeline.size(); ++i)
         this->pipeline[i]->clear();
-    this->pipeline[0]->run();
+    this->pipeline[first_stage]->run();
     
     this->postRunActions();
 
@@ -899,6 +907,8 @@ void Structuredetection::postRunActions()
     // Setting up general info
     this->setGeneralInfo(static_cast<LoopsMerge*>(pipeline[3])->getNPhases(), 
             static_cast<LoopsMerge*>(pipeline[3])->getDeltas());
+    auto deltas = static_cast<LoopsMerge*>(pipeline[3])->getDeltas();
+
 }
 
 /*
@@ -971,6 +981,8 @@ void Structuredetection::OnPGValueChanged(wxPropertyGridEvent& event)
         void *new_value;
         unsigned int ct = event.GetProperty()->GetAttribute("config_type")
             .GetLong();
+        PipelineStageGeneral* stage = config_field->getStage();
+        unsigned int stage_position = stage->getStagePosition();
 
         switch(ct)
         {
@@ -1000,8 +1012,7 @@ void Structuredetection::OnPGValueChanged(wxPropertyGridEvent& event)
                 " with these new parameters?", "Message", wxYES_NO|wxNO_DEFAULT);
         if (msgd.ShowModal() == wxID_YES )
         {
-            // TODO : '0' should be the first stage to execute
-            this->partial_run(0); 
+            this->partial_run(stage_position); 
         }
         msgd.Destroy();
     }

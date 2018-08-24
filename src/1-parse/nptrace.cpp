@@ -28,13 +28,15 @@ struct sort_same_instant_records
         if (r1->getType() == 2)
         {
             const NPEvent * event = static_cast<const NPEvent*>(r1);
-            if (event->existEvent("42000") != std::string::npos)
+            //if (event->existEvent("42000") != std::string::npos)
+            if (event->existEvent("42000") != -1)
                 return true;
         }
         if (r2->getType() == 2)
         {
             const NPEvent * event = static_cast<const NPEvent*>(r2);
-            if (event->existEvent("42000") != std::string::npos)
+            //if (event->existEvent("42000") != std::string::npos)
+            if (event->existEvent("42000") != -1)
                 return false;
         }
         return true;
@@ -48,14 +50,14 @@ NPRecord* NPTrace::getNextRecord()
 
     std::string line;
     this->file->getline(line);
-    this->progress_reporter->addProgress(line.size());
+    this->progress_reporter->addProgress((unsigned int)line.size());
     NPRecord* res = NPRecord::build(line);
 
     // Just in case line is invalid
     while (!res and !this->file->eof())
     {
         this->file->getline(line);
-        this->progress_reporter->addProgress(line.size());
+        this->progress_reporter->addProgress((unsigned int)line.size());
         res = NPRecord::build(line);
     }
 
@@ -111,8 +113,8 @@ void NPTrace::actual_run(std::string *trace_file)
         std::string header;
         this->file->getline(header); // dummy
         this->progress_reporter->setMax(
-                TraceStream::getTraceFileSize(*trace_file));
-        this->progress_reporter->addProgress(header.size());
+                (unsigned int)TraceStream::getTraceFileSize(*trace_file));
+        this->progress_reporter->addProgress((unsigned int)header.size());
         this->init = true;
     }
     else if(this->result)

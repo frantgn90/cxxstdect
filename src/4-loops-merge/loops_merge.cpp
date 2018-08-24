@@ -62,8 +62,8 @@ std::vector<unsigned int> LoopsMerge::getDeltas()
     // pointer freed in such a way it is reachable from now and onward
     //for (auto it : *(this->result))
     //  rr.push_back(it.getDelta()*100);
-    for (int i=0; i<this->result->size(); ++i)
-        rr.push_back(this->result->at(i).getDelta()*100);
+    for (unsigned int i=0; i<this->result->size(); ++i)
+        rr.push_back((unsigned int)this->result->at(i).getDelta()*100);
     return rr;
 }
 
@@ -134,8 +134,7 @@ void LoopsMerge::actual_run(LoopVector *input)
     arma::Row<size_t> assignements;
     arma::mat centroids;
 
-    // ERROR : On re-run seems that input contains pointers previously freed
-    for (int i=0; i < input->size(); ++i)
+    for (unsigned int i=0; i < input->size(); ++i)
         data(0,i) = input->at(i).getDelta();
 
     //data = arma::normalise(data);
@@ -150,9 +149,9 @@ void LoopsMerge::actual_run(LoopVector *input)
     /****/
 
     // Create the top level loops objects
-    this->nphases = nclusters;
+    this->nphases = (unsigned int)nclusters;
     this->result = new TopLevelLoopVector(nclusters);
-    for (int i=0; i < input->size(); ++i)
+    for (unsigned int i=0; i < input->size(); ++i)
     {
         size_t loop_id = assignements[i];
         this->result->at(loop_id).setLoopId(loop_id);

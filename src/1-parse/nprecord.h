@@ -25,12 +25,12 @@ class NPRecord
     public:
         NPRecord(const std::string line);
         static NPRecord *build(const std::string &line);
-        unsigned int getTimestamp() { return this->timestamp; };
+        long long getTimestamp() { return this->timestamp; };
         unsigned int getTask() { return this->task_id; };
         unsigned int getType() const { return this->type; };
     protected:
         unsigned int type;
-        unsigned int timestamp;
+        long long timestamp;
         unsigned int cpu_id;
         unsigned int app_id;
         unsigned int task_id;
@@ -50,7 +50,7 @@ class NPEvent : public NPRecord
         }*/
         int existEvent(const std::string type) const;
         std::pair<std::string, std::string> getEvent(int i);
-        unsigned int getNEvents() { return this->type.size(); };
+        unsigned int getNEvents() { return (unsigned int)this->type.size(); };
         std::vector<std::pair<std::string,std::string>> 
             getEvents(const std::string type);
         std::vector<std::pair<std::string,std::string>> 
@@ -70,15 +70,15 @@ class NPComm : public NPRecord
         unsigned int ptask_send_id;
         unsigned int task_send_id;
         unsigned int thread_send_id;
-        unsigned int logical_send;
-        unsigned int phyisical_send;
+        long long logical_send;
+        long long phyisical_send;
 
         unsigned int cpu_recv_id;
         unsigned int ptask_recv_id;
         unsigned int task_recv_id;
         unsigned int thread_recv_id;
-        unsigned int logical_recv;
-        unsigned int phyisical_recv;
+        long long logical_recv;
+        long long phyisical_recv;
 
         unsigned int size;
         unsigned int tag;
@@ -90,13 +90,13 @@ class NPStat : public NPRecord
         NPStat(const std::string line);
         unsigned int getState() const
             { return this->state; }
-        unsigned int getBeginTime() const
+        long long getBeginTime() const
             { return this->begin_time; }
-        unsigned int getEndTime() const
+        long long getEndTime() const
             { return this->end_time; }
     private:
-        unsigned int begin_time;
-        unsigned int end_time;
+        long long begin_time;
+        long long end_time;
         unsigned int state;
 };
 

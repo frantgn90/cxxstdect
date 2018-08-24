@@ -10,6 +10,7 @@
 #include <regex>
 #include <iostream>
 #include <assert.h>
+#include <boost/lexical_cast.hpp>
 
 TraceHeader::TraceHeader(std::string tracefile)
 {
@@ -60,19 +61,28 @@ void TraceHeader::readHeader(std::string header)
         std::cout << "Error parsing header" << std::endl;
         exit(-1);
     }
+    
+    try
+    {
+        this->day = std::stoi(m[1]);
+        this->month = std::stoi(m[2]);
+        this->year = std::stoi(m[3]);
+        this->hour = std::stoi(m[4]);
+        this->minutes = std::stoi(m[5]);
+        this->texe = boost::lexical_cast<long long>(m[6]);
+        this->texe_units = m[7];
+        this->nnodes = std::stoi(m[8]);
+        this->napps = std::stoi(m[11]);
+        this->ntasks = std::stoi(m[12]);
+        this->mapping = m[13];
+        this->ncomms = std::stoi(m[14]);
+    } 
+    catch (std::exception& e)
+    {
+        std::cout << "[TraceHeader] Exception on casting. Exiting..." << std::endl;
+        exit(1);
+    }
 
-    this->day = std::stoi(m[1]);
-    this->month = std::stoi(m[2]);
-    this->year = std::stoi(m[3]);
-    this->hour = std::stoi(m[4]);
-    this->minutes = std::stoi(m[5]);
-    this->texe = std::stoi(m[6]);
-    this->texe_units = m[7];
-    this->nnodes = std::stoi(m[8]);
-    this->napps = std::stoi(m[11]);
-    this->ntasks = std::stoi(m[12]);
-    this->mapping = m[13];
-    this->ncomms = std::stoi(m[14]);
 
     assert(this->napps == 1);
 }

@@ -21,7 +21,7 @@ class TraceHeader
         unsigned int year;
         unsigned int hour;
         unsigned int minutes;
-        unsigned int texe;
+        long long texe;
         std::string texe_units;
         unsigned int nnodes;
         unsigned int napps;

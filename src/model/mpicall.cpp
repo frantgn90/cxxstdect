@@ -13,42 +13,42 @@
 #include <numeric>
 #include <math.h>
 
-void RunLenghEncVector::push_back(unsigned int v)
+void RunLenghEncVector::push_back(long long v)
 {
     if (this->size() == 0)
     {
-        std::vector<std::pair<unsigned int,unsigned int>>::push_back(
+        std::vector<std::pair<unsigned int,long long>>::push_back(
                 std::make_pair(1,v));
     }
     else
     {
-        unsigned int lastv = this->back().second;
-        unsigned int ubound = ceil((float)lastv*(1+this->alias_tolerance));
-        unsigned int bbound = ceil((float)lastv*(1-this->alias_tolerance));
+        long long lastv = this->back().second;
+        long long ubound = ceil((float)lastv*(1+this->alias_tolerance));
+        long long bbound = ceil((float)lastv*(1-this->alias_tolerance));
 
         if (bbound <= v  and v <= ubound)
             this->back().first += 1; // compressed
         else
-            std::vector<std::pair<unsigned int,unsigned int>>::push_back(
+            std::vector<std::pair<unsigned int,long long>>::push_back(
                     std::make_pair(1,v));
     }
 }
 
 std::pair<unsigned int, unsigned int> pair_addition(
-        std::pair<unsigned int, unsigned int> a, 
-        std::pair<unsigned int, unsigned int> b)
+        std::pair<unsigned int, long long> a, 
+        std::pair<unsigned int, long long> b)
 {
-    return std::make_pair<unsigned int, unsigned int>(
+    return std::make_pair<unsigned int, long long>(
             a.first+b.first,
             a.second+b.second);
 }
 
-unsigned int RunLenghEncVector::getMean()
+long long RunLenghEncVector::getMean()
 {
     unsigned long long acc_durations = 0;
     unsigned int acc_repetitions = 0;
 
-    std::vector<std::pair<unsigned int, unsigned int>>::iterator it;
+    std::vector<std::pair<unsigned int, long long>>::iterator it;
     for (it=this->begin(); it != this->end(); ++it)
     {
         acc_durations += it->first * it->second;
@@ -64,7 +64,7 @@ void Callpath::setPath(std::vector<std::pair<std::string,std::string>> v)
           boost::bind(&std::pair<std::string,std::string>::first, _2));
 
     this->signature = 0;
-    for (int i=0; i<v.size(); ++i)
+    for (unsigned int i=0; i<v.size(); ++i)
     {
         int val = std::atoll(v[i].second.c_str());
         this->callpath.push_back(val);
@@ -79,7 +79,7 @@ void Callpath::setCall(std::vector<std::pair<std::string,std::string>> v)
           boost::bind(&std::pair<std::string,std::string>::first, _1) <
           boost::bind(&std::pair<std::string,std::string>::first, _2));
 
-    for (int i=0; i<v.size(); ++i)
+    for (unsigned int i=0; i<v.size(); ++i)
         this->caller.push_back(std::atoll(v[i].second.c_str()));
 }
 
@@ -90,7 +90,7 @@ void MPICall::setMPI(std::vector<std::pair<std::string,std::string>> v)
     this->mpiid = atoll(v[0].second.c_str());
 }
 
-ReducedMPICall::ReducedMPICall(MPICall mpicall, unsigned int texe)
+ReducedMPICall::ReducedMPICall(MPICall mpicall, long long texe)
     : MPICall(mpicall)
     , texe(texe)
     , first_timestamp(mpicall.getTimestamp())
@@ -181,17 +181,17 @@ unsigned int ReducedMPICall::getMsgSize()
 
 float ReducedMPICall::getDelta()
 {
+    float delta = 0.0;
     if (this->getRepetitions() > 1)
-        return float(this->getRepetitions()*this->getInterRepTime())/this->texe;
-    else
-        return 0;
+        delta = float(this->getRepetitions()*this->getInterRepTime())/this->texe;
+    return delta;
 }
 
 
-unsigned int ReducedMPICall::getTimestampAt(unsigned int i)
+long long ReducedMPICall::getTimestampAt(unsigned int i)
 {
-    unsigned int res=0;
-    for(int j=0; j<i; ++j)
+    long long res=0;
+    for(unsigned int j=0; j<i; ++j)
         res += this->interrep_times[0][j];
     return res+this->first_timestamp;
 }
@@ -215,7 +215,7 @@ void ReducedCPUBurst::reduce(CPUBurst cpu_burst)
         this->hwc_types.push_back(std::vector<unsigned int>());
         this->hwc_values.push_back(std::vector<RunLenghEncVector>());
 
-        for (int i=0; i < cpu_burst.getHWCTypes().size(); ++i)
+        for (unsigned int i=0; i < cpu_burst.getHWCTypes().size(); ++i)
         {
             unsigned int hwc_type = cpu_burst.getHWCTypes()[i];
             unsigned int hwc_value = cpu_burst.getHWCValues()[i];
@@ -231,7 +231,7 @@ void ReducedCPUBurst::reduce(CPUBurst cpu_burst)
         this->repetitions[ind] += 1;
 
         this->durations[ind].push_back(cpu_burst.getDuration());
-        for (int i=0; i < cpu_burst.getHWCTypes().size(); ++i)
+        for (unsigned int i=0; i < cpu_burst.getHWCTypes().size(); ++i)
         {
             unsigned int hwc_type = cpu_burst.getHWCTypes()[i];
             unsigned int hwc_value = cpu_burst.getHWCValues()[i];

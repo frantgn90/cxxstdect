@@ -19,40 +19,40 @@ class Loop
         Loop()
             : loop_id(0)
             , superloop(NULL)
-            , aliased_with(-1)
             , is_hidden_superloop(false)
             , hidden_superloop_iterations(0)
-            , tasks(NULL) {};
-        Loop(size_t loop_id, arma::mat centroid)
+            , tasks(NULL) 
+            , aliased_with(-1) {};
+        Loop(unsigned int loop_id, arma::mat centroid)
             : loop_id(loop_id)
-            , centroid(centroid)
             , superloop(NULL)
+            , is_hidden_superloop(false)
+            , hidden_superloop_iterations(0)
+            , tasks(NULL)
             , aliased_with(-1)
-            , is_hidden_superloop(false)
-            , hidden_superloop_iterations(0)
-            , tasks(NULL) {};
-        Loop(size_t loop_id, arma::mat centroid, int aliased_with)
+            , centroid(centroid) {};
+        Loop(unsigned int loop_id, arma::mat centroid, int aliased_with)
             : loop_id(loop_id)
-            , centroid(centroid)
             , superloop(NULL)
-            , aliased_with(aliased_with) 
             , is_hidden_superloop(false)
             , hidden_superloop_iterations(0)
-            , tasks(NULL) {};
-        Loop(size_t loop_id, arma::mat centroid, 
+            , tasks(NULL)
+            , aliased_with(aliased_with)
+            , centroid(centroid) {};
+        Loop(unsigned int loop_id, arma::mat centroid, 
                 bool is_hidden_superloop, int its)
             : loop_id(loop_id)
-            , centroid(centroid)
             , superloop(NULL)
-            , aliased_with(-1)
             , is_hidden_superloop(is_hidden_superloop)
             , hidden_superloop_iterations(its)
-            , tasks(NULL) {};
+            , tasks(NULL)
+            , aliased_with(-1)
+            , centroid(centroid) {};
         unsigned int getId()
             { return this->loop_id; }
         void insert(ReducedMPICall *mpi_call)
             { this->mpi_calls.push_back(mpi_call); }
-        void setLoopId(size_t loop_id)
+        void setLoopId(unsigned int loop_id)
             { this->loop_id = loop_id; }
         void setCentroid(arma::mat centroid)
             { this->centroid = centroid; }
@@ -66,7 +66,7 @@ class Loop
                 float sum = 0;
                 for (auto it : this->mpi_calls)
                     sum += it->getDelta();
-                return sum/this->mpi_calls.size();
+                return sum/(float)this->mpi_calls.size();
             }
         }
         unsigned int getIterations() const
@@ -88,7 +88,7 @@ class Loop
             { return this->subloops; }
         std::vector<unsigned int>* getTasks();
         bool isSubloopOf(Loop* l);
-        std::pair<unsigned int, unsigned int> getIterationsBounds(int i);
+        std::pair<long long, long long> getIterationsBounds(int i);
         bool isAliased(std::vector<ReducedMPICall*> mpi_calls, unsigned int deph);
         std::vector<Loop*> getAliasedLoops()
             { return this->aliased_loops; }
@@ -119,8 +119,9 @@ class Loop
             //std::for_each(aliased_loops.begin(), aliased_loops.end(),
             //        [](Loop* ptr){ delete ptr; });
             aliased_loops.clear();
-            std::for_each(hidden_superloops.begin(), hidden_superloops.end(),
-                    [](Loop* ptr){ delete ptr; });
+            // TODO : Aliased loops should be freed in somewhere
+            //std::for_each(hidden_superloops.begin(), hidden_superloops.end(),
+            //        [](Loop* ptr){ delete ptr; });
             hidden_superloops.clear();
         }
         void sortMpiCalls()
@@ -132,17 +133,17 @@ class Loop
             std::sort(mpi_calls.begin(), mpi_calls.end(), pA_comp());
         }
     private:
-        arma::mat centroid;
-        size_t loop_id;
+        unsigned int loop_id;
         Loop* superloop;
+        bool is_hidden_superloop;
+        unsigned int hidden_superloop_iterations;
+        std::vector<unsigned int>* tasks;
+        int aliased_with;
+        arma::mat centroid;
         std::vector<ReducedMPICall*> mpi_calls;
         std::vector<Loop*> subloops;
         std::vector<Loop*> aliased_loops;
         std::vector<Loop*> hidden_superloops;
-        int aliased_with;
-        bool is_hidden_superloop;
-        unsigned int hidden_superloop_iterations;
-        std::vector<unsigned int>* tasks;
 
         struct pA_comp {
             bool operator() (ReducedMPICall* left, ReducedMPICall* right) const 
@@ -159,7 +160,7 @@ typedef std::vector<Loop> LoopVector;
 class LoopsIdentification : public PipelineStage<UniqueMpiVector, LoopVector>
 {
     public:
-        LoopsIdentification(double eps, size_t minPts)
+        LoopsIdentification(float eps, int minPts)
             : PipelineStage<UniqueMpiVector, std::vector<Loop>>(
                     "Loops indentification", false, false)
             , eps(eps)

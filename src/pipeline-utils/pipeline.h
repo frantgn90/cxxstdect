@@ -19,6 +19,8 @@
 #include <execinfo.h>
 #include <memory>
 
+class PipelineStageGeneral;
+
 class ProgressReporter 
 {
     public:
@@ -38,6 +40,12 @@ class GeneralConfigField
         virtual std::string getName() = 0;
         virtual void* getManager() = 0;
         virtual void setValuep(void* ptr) = 0;
+        void setStage(PipelineStageGeneral* stage)
+            { this->stage = stage; }
+        PipelineStageGeneral* getStage()
+            { return this->stage; }
+    protected:
+        PipelineStageGeneral* stage;
 };
 
 template<class T> 
@@ -67,7 +75,8 @@ class ConfigField : public GeneralConfigField
         virtual void* getManager()
             { return myGetManager(this->getDefault()); }
         void* myGetManager(T df)
-            { return NULL; }
+            { std::cout << "myGetManager not implemented for " << df << std::endl;
+                return NULL; }
         void* getPointer()
             { return this->p; }
     private:
@@ -90,6 +99,7 @@ class PipelineStageGeneral
             , msg_printed(false)
             , progress_reporter(NULL)
             , log_reporter(NULL)
+            , stage_position(0)
         {
         };
 
@@ -97,12 +107,15 @@ class PipelineStageGeneral
         virtual void run() {};
         virtual void setInput(void *) {};
 
-        unsigned int getDuration() 
+        double getDuration() 
             { return duration; }
         bool withMR() 
             { return this->multirecv; }
         void connect(PipelineStageGeneral *next) 
-            { this->next_stage = next; }
+        { 
+            this->next_stage = next; 
+            next->setStagePosition(this->stage_position+1); 
+        }
         void setProgressReporter(ProgressReporter* pr)
             { this->progress_reporter = pr; }
         void setLogReporter(LogReporter* lr)
@@ -116,23 +129,29 @@ class PipelineStageGeneral
         template <class T> void addConfigField(std::string name, T df, T* p)
         {
             ConfigField<T> *new_cf = new ConfigField<T>(name,df,p);
+            new_cf->setStage(this);
             this->config_fields.push_back(new_cf);
         }
         std::vector<GeneralConfigField*> getConfFields()
             { return this->config_fields; }
         std::string getPhaseName()
             { return this->phasename; }
+        unsigned int getStagePosition()
+            { return this->stage_position; }
+        void setStagePosition(unsigned int p)
+            { this->stage_position = p; }
     protected:
-        bool msg_printed;
-        bool prev_done;
-        bool done;
-        bool multisend;
         bool multirecv;
-        double duration;
+        bool multisend;
+        bool done;
+        bool prev_done;
         std::string phasename;
         PipelineStageGeneral* next_stage;
+        bool msg_printed;
         ProgressReporter* progress_reporter;
         LogReporter* log_reporter;
+        unsigned int stage_position;
+        double duration;
         bool debug = false; // TODO : Should be configured by user
         std::vector<GeneralConfigField*> config_fields;
 };
@@ -244,7 +263,7 @@ class PipelineStage : public PipelineStageGeneral
             }
         }
 
-        virtual void actual_run(T1* input) {};
+        virtual void actual_run(T1* input) { *input = (T1)0; };
         virtual void actual_clear() {};
         virtual void print_result() { printf("This is the virtual function."); };
 };

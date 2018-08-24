@@ -27,18 +27,18 @@
 
 #define STATE_RUN 1
 
-typedef std::unordered_map<unsigned int, ReducedMPICall> UniqueMpiMap;
-typedef std::unordered_map<unsigned int, NPComm> CommMap;
+typedef std::unordered_map<long unsigned int, ReducedMPICall> UniqueMpiMap;
+typedef std::unordered_map<long long, NPComm> CommMap;
 typedef std::vector<ReducedMPICall> UniqueMpiVector;
 
 class Reducer : public PipelineStage<NPRecord, UniqueMpiVector>
 {
     public:
-        Reducer(unsigned int texe, float lb, unsigned int ntasks)
+        Reducer(long long texe, float lb, unsigned int ntasks)
             : PipelineStage<NPRecord, UniqueMpiVector>("Reducer", true,false)
             , lbound(lb)
             , texe(texe)
-            , alias_tolerance(0.1)
+            , alias_tolerance(0.1f)
         {
             this->result = new UniqueMpiVector();
             last_mpicall = std::vector<MPICall>(ntasks);
@@ -81,7 +81,7 @@ class Reducer : public PipelineStage<NPRecord, UniqueMpiVector>
             //unique_mpicalls.clear();
             this->partial_result.clear();
 
-            int ntasks = last_mpicall.size();
+            unsigned int ntasks = (unsigned int)last_mpicall.size();
             last_mpicall.clear();
             last_cpu_burst.clear();
             comm_match.clear();
@@ -95,7 +95,7 @@ class Reducer : public PipelineStage<NPRecord, UniqueMpiVector>
         //UniqueMpiMap unique_mpicalls;
         UniqueMpiMap partial_result;
         float lbound;
-        unsigned int texe;
+        long long texe;
         std::vector<MPICall> last_mpicall;
         std::vector<CPUBurst> last_cpu_burst;
         std::vector<CommMap> comm_match;

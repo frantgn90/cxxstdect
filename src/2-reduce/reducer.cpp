@@ -8,6 +8,7 @@
 #include "reducer.h"
 #include <iostream> 
 #include <assert.h>
+#include <boost/lexical_cast.hpp>
 
 #define TID(event) event->getTask()-1
 
@@ -15,8 +16,8 @@ void Reducer::hwc_event(unsigned int task,
         std::pair<std::string, std::string> event)
 {
     this->last_cpu_burst[task].addHWCounter(
-            std::atoll(event.first.c_str()),
-            std::atoll(event.second.c_str()));
+            boost::lexical_cast<unsigned int>(event.first.c_str()),
+            boost::lexical_cast<unsigned int>(event.second.c_str()));
 }
 
 void Reducer::open_mpi(NPEvent *event)
@@ -36,7 +37,7 @@ void Reducer::open_mpi(NPEvent *event)
 void Reducer::close_mpi(NPEvent *event)
 {
     MPICall mpic = this->last_mpicall[event->getTask()-1];
-    unsigned int duration = event->getTimestamp() - mpic.getTimestamp();
+    long long duration = event->getTimestamp() - mpic.getTimestamp();
     mpic.setDuration(duration);
 
     if (!mpic.isMatched())
@@ -85,7 +86,6 @@ void Reducer::actual_run(NPRecord *record)
 
 void Reducer::process(NPEvent *event)
 {
-    int i;
     // First look for hwc
     for (auto e : event->getEvents("420000"))
     {

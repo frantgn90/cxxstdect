@@ -47,8 +47,8 @@ class TraceStream
     TraceStream()
     {}
 
-    TraceStream( const std::string& filename )
-    {}
+    //TraceStream( const std::string& filename )
+    //{}
 
     virtual ~TraceStream()
     {}

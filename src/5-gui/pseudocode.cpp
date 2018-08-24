@@ -10,6 +10,7 @@
 #include <regex>
 #include <algorithm>
 #include <stdlib.h>
+#include <boost/lexical_cast.hpp>
 
 GUIReducedCPUBurst::GUIReducedCPUBurst(
         ReducedCPUBurst *cpuburst,
@@ -38,7 +39,7 @@ GUIReducedMPICall::GUIReducedMPICall(
     std::string srcpos_regex = "^([0-9]+) \\(((.+))(,.+)?\\)$";
     std::regex regex(srcpos_regex);
 
-    for (int i=0; i < mpicall->getCallpath().size(); ++i)
+    for (unsigned int i=0; i < mpicall->getCallpath().size(); ++i)
     {
         std::string caller = this->getSemantic(
                 70000000+i+1, mpicall->getCallers()[i]);
@@ -57,7 +58,8 @@ GUIReducedMPICall::GUIReducedMPICall(
             //exit(-1);
         }
 
-        unsigned int line = std::atoll(std::string(m[1]).c_str());
+        unsigned int line = boost::lexical_cast<unsigned int>(
+                std::string(m[1]).c_str());
         std::string file = m[2];
 
         this->callpath_str.push_back(make_tuple(line, file, caller));
@@ -149,7 +151,7 @@ std::ostream &operator<<(std::ostream &output, GUIRepresentation &r)
 std::string GUIReducedMPICall::print()
 {
     std::string result;
-    for (int i=0; i<this->callpath_str.size(); ++i)
+    for (unsigned int i=0; i<this->callpath_str.size(); ++i)
         result += "["
             + std::to_string(std::get<0>(this->callpath_str[i])) + "]"
             + std::get<2>(this->callpath_str[i]) 
@@ -179,8 +181,8 @@ std::string GUILoop::print()
 wxPseudocode::wxPseudocode(std::vector<GUILoop*> top_level_loops)
     : show_computations(false)
     , computation_thresshold(0)
-    , time_factor(1)
     , size_factor(1)
+    , time_factor(1)
 {
     srand(123456);
     for (auto it : top_level_loops)
@@ -348,7 +350,7 @@ unsigned int wxPseudocode::GetChildren(const wxDataViewItem& item,
 
 unsigned int wxPseudocode::GetColumnCount() const
 {
-    return this->coltypes.size();
+    return (unsigned int)this->coltypes.size();
 }
 
 wxString wxPseudocode::GetColumnType(unsigned int col) const
@@ -369,7 +371,7 @@ void wxPseudocode::GetValue(wxVariant &var, const wxDataViewItem& item,
             }
         case 1:
             {
-                float vt = (float)(pitem->GetDuration()*this->time_factor);
+                float vt = (float)pitem->GetDuration()*this->time_factor;
                 if (vt == 0)
                     var = "-";
                 else
@@ -382,7 +384,7 @@ void wxPseudocode::GetValue(wxVariant &var, const wxDataViewItem& item,
             }
         case 2:
             {
-                float vt = (float)(pitem->GetMsgSize()*this->size_factor);
+                float vt = (float)pitem->GetMsgSize()*this->size_factor;
                 if (vt == 0)
                     var = "-";
                 else

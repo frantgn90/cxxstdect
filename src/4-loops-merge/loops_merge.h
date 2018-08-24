@@ -45,11 +45,11 @@ class TopLevelLoop
         void superloop_detect();
         void aliasing_split();
 
+        unsigned int ntll; // if aliasing could be tll > 1
         Loop *superloop;
         std::vector<Loop*> loops;
         size_t loop_id;
         float delta;
-        unsigned int ntll; // if aliasing could be tll > 1
 };
 
 typedef std::vector<TopLevelLoop> TopLevelLoopVector;
@@ -57,7 +57,7 @@ typedef std::vector<TopLevelLoop> TopLevelLoopVector;
 class LoopsMerge : public PipelineStage<LoopVector, TopLevelLoopVector>
 {
     public:
-        LoopsMerge(double eps, size_t minPts, unsigned int texe)
+        LoopsMerge(float eps, int minPts, long long texe)
             : PipelineStage<LoopVector, TopLevelLoopVector>(
                     "Loops merge", false, false)
             , eps(eps)
@@ -92,7 +92,7 @@ class LoopsMerge : public PipelineStage<LoopVector, TopLevelLoopVector>
         unsigned int nphases;
         float eps;
         int minPts;
-        unsigned int texe;
+        long long texe;
         std::string clustering_data_file;
         std::string gnuplot_script_file;
 };

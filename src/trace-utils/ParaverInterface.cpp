@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-ParaverInterface::ParaverInterface(std::string tracepath, unsigned int duration)
+ParaverInterface::ParaverInterface(std::string tracepath, long long duration)
     : tracepath(tracepath)
     , traceduration(duration)
     , paraverpid(0)

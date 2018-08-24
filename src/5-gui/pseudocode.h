@@ -33,12 +33,13 @@ class GUIRepresentation
     public:
         GUIRepresentation(libparaver::UIParaverTraceConfig* trace_semantic)
             : trace_semantic(trace_semantic) {};
+        virtual ~GUIRepresentation() {};
         Caller getCallerAt(unsigned int i) const
             { return this->callpath_str[i]; }
         std::vector<Caller> getCallers() const
             { return this->callpath_str; }
         unsigned int getNCallers() const
-            { return this->callpath_str.size(); }
+            { return (unsigned int)this->callpath_str.size(); }
         std::vector<Caller> getCallpath()
             { return this->callpath_str; }
         virtual std::string print() = 0;
@@ -52,7 +53,9 @@ class GUIRepresentation
         virtual float getIPC()
             { return 0.0; }
         virtual float getHWC(std::string hwc_name)
-            { return 0; }
+        {   //std::cout << "getHWC not implemented for " << hwc_name << std::endl;
+            return 0; 
+        }
         virtual bool isLoop()
             { return false; }
         virtual std::vector<unsigned int>* getTasks()
@@ -76,7 +79,7 @@ class GUIReducedCPUBurst : public GUIRepresentation
         std::vector<unsigned int>* getTasks()
             { return this->cpuburst->getTasks(); }
         virtual unsigned int getDuration()
-            { return this->cpuburst->getDuration(); }
+            { return (unsigned int)this->cpuburst->getDuration(); }
         virtual float getHWC(std::string hwc_name)
         {
             for (auto it : this->hwc)
@@ -126,7 +129,16 @@ class GUILoop : public GUIRepresentation
         ~GUILoop()
         {
             std::for_each(statements.begin(), statements.end(),
-                    [](GUIRepresentation* ptr) { delete ptr; });
+                    [](GUIRepresentation* ptr) 
+            { 
+                delete ptr;
+                /*
+                if (ptr->isLoop())
+                    delete static_cast<GUILoop*>(ptr);
+                else
+                    delete static_cast<GUIReducedMPICall*>(ptr); 
+                */
+            });
             statements.clear();
         }
         unsigned int getNIterations() const
@@ -254,7 +266,7 @@ class wxPseudocodeItem
     private:
         std::string line;
         unsigned int duration;
-        float msg_size;
+        unsigned int msg_size;
         float ipc;
         wxPseudocodeItem *parent = NULL;
         std::vector<wxPseudocodeItem*> ordered_childs;

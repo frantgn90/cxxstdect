@@ -4,7 +4,8 @@ dnl ==================================
 AC_INIT([stdect], [0.0.1], [jmartine@bsc.es])
 AC_CANONICAL_SYSTEM
 
-AM_INIT_AUTOMAKE([silent-rules -Wall -Werror foreign])
+dnl AM_INIT_AUTOMAKE([silent-rules -Wall -Werror foreign])
+AM_INIT_AUTOMAKE
 
 AC_PROG_CXX
 AM_PROG_AR
@@ -28,7 +29,8 @@ AC_CONFIG_MACRO_DIR([m4])
 dnl ==================================
 dnl General compiling flags
 dnl ==================================
-dnl CXXFLAGS = -g -O0
+dnl AX_CFLAGS_WARN_ALL
+dnl AX_CXXFLAGS_WARN_ALL
 
 dnl ==================================
 dnl Check dependencies 

@@ -9,14 +9,14 @@
 #include <iostream>
 #include <limits>
 
-std::pair<unsigned int, unsigned int> Loop::getIterationsBounds(int i)
+std::pair<long long, long long> Loop::getIterationsBounds(int i)
 {
     if (!this->is_hidden_superloop)
     {
         ReducedMPICall* first_mpicall = this->mpi_calls[0];
 
-        unsigned int lower_bound = first_mpicall->getTimestampAt(i);
-        unsigned int upper_bound = first_mpicall->getTimestampAt(i+1);
+        long long lower_bound = first_mpicall->getTimestampAt(i);
+        long long upper_bound = first_mpicall->getTimestampAt(i+1);
         return std::make_pair(lower_bound, upper_bound);
     }
     else
@@ -47,11 +47,13 @@ void Loop::digest(Loop* l)
 unsigned int Loop::getLongestIteration()
 {
     // TODO : Get the iteration with longest duration
+    return 0;
 }
 
 unsigned int Loop::getShortestIteration()
 {
     // TODO : Get the iteration with shortest duration
+    return 0;
 }
 
 bool Loop::isSubloopOf(Loop* l)
@@ -101,12 +103,11 @@ bool Loop::isSubloopOf(Loop* l)
 
 bool Loop::isAliased(std::vector<ReducedMPICall*> mpi_calls, unsigned int deph)
 {
-    unsigned int last_time = 0;
     std::vector<ReducedMPICall*> split;
 
     // For the two first timestamps should be enough
     
-    unsigned int upbound = mpi_calls[0]->getTimestampAt(1);
+    long long upbound = mpi_calls[0]->getTimestampAt(1);
     for (auto it = mpi_calls.begin(); it != mpi_calls.end(); ++it)
     {
         if ((*it)->getTimestampAt(0) >= upbound)
@@ -142,9 +143,9 @@ void Loop::superloopAnalysis()
     if (this->aliased_loops.size() == 0)
         return;
 
-    unsigned int last_init_time = this->aliased_loops[0]
+    long long last_init_time = this->aliased_loops[0]
         ->getIterationsBounds(0).first;
-    unsigned int last_fini_time = this->aliased_loops[0]
+    long long last_fini_time = this->aliased_loops[0]
         ->getIterationsBounds(this->aliased_loops[0]->getIterations()-2).second;
 
     unsigned int sset = 0;
@@ -152,11 +153,11 @@ void Loop::superloopAnalysis()
     superloops.push_back(std::vector<Loop*>());
     superloops[sset].push_back(this->aliased_loops[0]);
 
-    for(int i=1; i<this->aliased_loops.size(); ++i)
+    for(unsigned int i=1; i<this->aliased_loops.size(); ++i)
     {
-        unsigned int init_time = this->aliased_loops[i]
+        long long init_time = this->aliased_loops[i]
             ->getIterationsBounds(0).first;
-        unsigned int fini_time = this->aliased_loops[i]
+        long long fini_time = this->aliased_loops[i]
             ->getIterationsBounds(this->aliased_loops[i]->getIterations()-2).second;
 
         if (last_init_time < init_time and init_time < last_fini_time)
@@ -291,7 +292,7 @@ void LoopsIdentification::actual_run(UniqueMpiVector *input)
     unsigned int max_reps = 0;
     unsigned int max_iit = 0;
 
-    for (int i=0; i < input->size(); ++i)
+    for (unsigned int i=0; i < input->size(); ++i)
     {
         if (input->at(i).getRepetitions() > max_reps)
             max_reps = input->at(i).getRepetitions();
@@ -300,7 +301,7 @@ void LoopsIdentification::actual_run(UniqueMpiVector *input)
     }
 
     // Cols are items and rows are dimensions
-    for (int i=0; i < input->size(); ++i)
+    for (unsigned int i=0; i < input->size(); ++i)
     {
         double norm_reps = 1.0*input->at(i).getRepetitions()/max_reps;
         double norm_iit = 1.0*input->at(i).getInterRepTime()/max_iit;
@@ -318,16 +319,16 @@ void LoopsIdentification::actual_run(UniqueMpiVector *input)
     /****/
     
     this->result = new LoopVector(nclusters);
-    for (int i=0; i < input->size(); ++i)
+    for (unsigned int i=0; i < input->size(); ++i)
     {
         size_t loop_id = assignements[i];
-        this->result->at(loop_id).setLoopId(loop_id);
+        this->result->at(loop_id).setLoopId((unsigned int)loop_id);
         this->result->at(loop_id).insert(&input->at(i));
         //arma::mat centroid = centroids[loop_id];
         //this->result->at(loop_id).setCentroid(centroid);
     }
 
-    for (int i=0; i<this->result->size(); ++i)
+    for (unsigned int i=0; i<this->result->size(); ++i)
         this->result->at(i).sortMpiCalls();
 
     /*

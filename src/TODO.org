@@ -3,6 +3,10 @@
   - [ ] Fix superloop detection (not working well when execute cg.a.32)
   - [ ] Revise memory leakage. Reprogram all destructors of implemented
     classes.
+  - [ ] Aliased loops can not be freed by Loop destructor because SIGSEGV
+    appears. Think about where to free them.
+  - [ ] Hidden superloops can not be freed by Loop destructor because SIGSEGV
+    appears. Think about where to free them.
 * TODO Paraver interoperability
   - [ ] Even w/o compressing times, the iterations boundaries are degrading
     as bigger the iteration index is.
@@ -14,7 +18,7 @@
   - [ ] When close paraver, it is not showed up again.
 * TODO Property grid
   - [X] Program 'Time units' and 'Size units'.
-  - [ ] Whenever a pipeline option is shown, a dialog should be launched
+  - [X] Whenever a pipeline option is shown, a dialog should be launched
     asking to user if pipeline should be re-runned.
 * TODO Dataview
   - [ ] Save fold/unfold state before modify the model in order to restore
@@ -25,8 +29,7 @@
   - [ ] When MPI calls are filtered by rank, CPU burst info is not showed up
   - [ ] Show callpath of every MPI call as a contextual panel(?) that pops-up
     when user maintains mouse pointer over a given mpi call.
+  - [ ] When there is a hidden superloop the delta functions are not showed
+    correctly on gnuplot
 * TODO GUI
-  - [ ] Legend is only shown when a resize of the windows is done.
-* TODO Free aliased loops
-  - [ ] Aliased loops can not be freed by Loop destructure because SIGSEGV
-    appears. Think about where to free them.
+  - [X] Legend is only shown when a resize of the windows is done.
