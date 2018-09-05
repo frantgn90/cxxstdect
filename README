@@ -1,0 +1,9 @@
+# Structure detection tool
+
+This tool is devoted to ease the process of analyse a trace by exposing to the analyst the intern structure of an application by detecting the repetitive patterns in a trace. This work has been motivated by the master thesis in the next link: https://upcommons.upc.edu/handle/2117/118762
+
+## Dependencies
+
+wxWidget 3.1.1 (https://www.wxwidgets.org/downloads/)
+Boost 1.61 (https://www.boost.org/users/download/)
+MLPack (http://mlpack.org/)
