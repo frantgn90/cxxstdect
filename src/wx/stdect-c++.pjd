@@ -552,7 +552,7 @@
               <long name="is-transient">0</long>
               <long name="locked">0</long>
               <long name="owns-file">1</long>
-              <string name="proxy-Bitmap">"../../../paraver/git/wxparaver/icons/file_browser.xpm"</string>
+              <string name="proxy-Bitmap">"file_browser.xpm"</string>
               <string name="proxy-Bitmap (disabled)">""</string>
               <bool name="proxy-Enabled">1</bool>
               <string name="proxy-Help text">""</string>
@@ -652,7 +652,7 @@
               <long name="is-transient">0</long>
               <long name="locked">0</long>
               <long name="owns-file">1</long>
-              <string name="proxy-Bitmap">"../../../paraver/git/wxparaver/icons/derived_substract.xpm"</string>
+              <string name="proxy-Bitmap">"../../imgs/derived_substract.xpm"</string>
               <string name="proxy-Bitmap (disabled)">""</string>
               <bool name="proxy-Enabled">1</bool>
               <string name="proxy-Help text">"Unfold less"</string>
@@ -774,7 +774,7 @@
               <long name="is-transient">0</long>
               <long name="locked">0</long>
               <long name="owns-file">1</long>
-              <string name="proxy-Bitmap">"../../../paraver/git/wxparaver/icons/new_window.xpm"</string>
+              <string name="proxy-Bitmap">"new_window.xpm"</string>
               <string name="proxy-Bitmap (disabled)">""</string>
               <bool name="proxy-Enabled">1</bool>
               <string name="proxy-Help text">"Show clustering"</string>
@@ -852,7 +852,7 @@
               <long name="is-transient">0</long>
               <long name="locked">0</long>
               <long name="owns-file">1</long>
-              <string name="proxy-Bitmap">"../../../paraver/git/wxparaver/icons/delete.xpm"</string>
+              <string name="proxy-Bitmap">"../../imgs/delete.xpm"</string>
               <string name="proxy-Bitmap (disabled)">""</string>
               <bool name="proxy-Enabled">1</bool>
               <string name="proxy-Help text">"Exit program"</string>
@@ -3286,6 +3286,28 @@
           <string name="title">"app_edit.xpm"</string>
           <string name="type">"image-document"</string>
           <string name="filename">"app_edit.xpm"</string>
+          <string name="icon-name">"image"</string>
+          <long name="is-transient">0</long>
+          <long name="owns-file">1</long>
+          <long name="title-mode">0</long>
+          <long name="locked">0</long>
+          <long name="zoom-level">100</long>
+        </document>
+        <document>
+          <string name="title">"file_browser.xpm"</string>
+          <string name="type">"image-document"</string>
+          <string name="filename">"file_browser.xpm"</string>
+          <string name="icon-name">"image"</string>
+          <long name="is-transient">0</long>
+          <long name="owns-file">1</long>
+          <long name="title-mode">0</long>
+          <long name="locked">0</long>
+          <long name="zoom-level">100</long>
+        </document>
+        <document>
+          <string name="title">"new_window.xpm"</string>
+          <string name="type">"image-document"</string>
+          <string name="filename">"new_window.xpm"</string>
           <string name="icon-name">"image"</string>
           <long name="is-transient">0</long>
           <long name="owns-file">1</long>

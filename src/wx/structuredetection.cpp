@@ -41,13 +41,13 @@
 #include "structuredetection.h"
 
 ////@begin XPM images
-#include "../../../paraver/git/wxparaver/icons/file_browser.xpm"
+#include "file_browser.xpm"
 #include "../../imgs/derived_add.xpm"
-#include "../../../paraver/git/wxparaver/icons/derived_substract.xpm"
+#include "../../imgs/derived_substract.xpm"
 #include "app_edit.xpm"
 #include "../../imgs/timeline.xpm"
-#include "../../../paraver/git/wxparaver/icons/new_window.xpm"
-#include "../../../paraver/git/wxparaver/icons/delete.xpm"
+#include "new_window.xpm"
+#include "../../imgs/delete.xpm"
 ////@end XPM images
 
 
@@ -207,7 +207,7 @@ void Structuredetection::CreateControls()
     itemFrame1->SetStatusBar(status_bar);
 
     wxToolBar* itemToolBar3 = CreateToolBar( wxTB_FLAT|wxTB_VERTICAL, ID_TOOLBAR );
-    wxBitmap itemtool4Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/file_browser.xpm")));
+    wxBitmap itemtool4Bitmap(itemFrame1->GetBitmapResource(wxT("file_browser.xpm")));
     wxBitmap itemtool4BitmapDisabled;
     itemToolBar3->AddTool(ID_TOOL6, wxEmptyString, itemtool4Bitmap, itemtool4BitmapDisabled, wxITEM_NORMAL, wxEmptyString, wxEmptyString);
     wxStaticLine* itemStaticLine5 = new wxStaticLine( itemToolBar3, wxID_STATIC, wxDefaultPosition, wxSize(-1, 20), wxLI_HORIZONTAL );
@@ -215,7 +215,7 @@ void Structuredetection::CreateControls()
     wxBitmap itemtool6Bitmap(itemFrame1->GetBitmapResource(wxT("../../imgs/derived_add.xpm")));
     wxBitmap itemtool6BitmapDisabled;
     itemToolBar3->AddTool(ID_TOOL2, wxEmptyString, itemtool6Bitmap, itemtool6BitmapDisabled, wxITEM_NORMAL, _("Unfold more"), _("Unfold more"));
-    wxBitmap itemtool7Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/derived_substract.xpm")));
+    wxBitmap itemtool7Bitmap(itemFrame1->GetBitmapResource(wxT("../../imgs/derived_substract.xpm")));
     wxBitmap itemtool7BitmapDisabled;
     itemToolBar3->AddTool(ID_TOOL3, wxEmptyString, itemtool7Bitmap, itemtool7BitmapDisabled, wxITEM_NORMAL, _("Unfold less"), _("Unfold less"));
     wxStaticLine* itemStaticLine8 = new wxStaticLine( itemToolBar3, wxID_STATIC, wxDefaultPosition, wxSize(-1, 20), wxLI_HORIZONTAL );
@@ -226,12 +226,12 @@ void Structuredetection::CreateControls()
     wxBitmap itemtool10Bitmap(itemFrame1->GetBitmapResource(wxT("../../imgs/timeline.xpm")));
     wxBitmap itemtool10BitmapDisabled;
     itemToolBar3->AddTool(ID_TOOL1, wxEmptyString, itemtool10Bitmap, itemtool10BitmapDisabled, wxITEM_NORMAL, _("Show information panel"), _("Show information panel"));
-    wxBitmap itemtool11Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/new_window.xpm")));
+    wxBitmap itemtool11Bitmap(itemFrame1->GetBitmapResource(wxT("new_window.xpm")));
     wxBitmap itemtool11BitmapDisabled;
     itemToolBar3->AddTool(ID_TOOL5, _("Show clustering"), itemtool11Bitmap, itemtool11BitmapDisabled, wxITEM_NORMAL, _("Show clustering"), _("Show clustering"));
     wxStaticLine* itemStaticLine12 = new wxStaticLine( itemToolBar3, wxID_STATIC, wxDefaultPosition, wxSize(-1, 20), wxLI_HORIZONTAL );
     itemToolBar3->AddControl(itemStaticLine12);
-    wxBitmap itemtool13Bitmap(itemFrame1->GetBitmapResource(wxT("../../../paraver/git/wxparaver/icons/delete.xpm")));
+    wxBitmap itemtool13Bitmap(itemFrame1->GetBitmapResource(wxT("../../imgs/delete.xpm")));
     wxBitmap itemtool13BitmapDisabled;
     itemToolBar3->AddTool(wxID_EXIT, wxEmptyString, itemtool13Bitmap, itemtool13BitmapDisabled, wxITEM_NORMAL, _("Exit program"), _("Exit program"));
     itemToolBar3->Realize();
@@ -426,7 +426,7 @@ wxBitmap Structuredetection::GetBitmapResource( const wxString& name )
     // Bitmap retrieval
 ////@begin Structuredetection bitmap retrieval
     wxUnusedVar(name);
-    if (name == wxT("../../../paraver/git/wxparaver/icons/file_browser.xpm"))
+    if (name == wxT("file_browser.xpm"))
     {
         wxBitmap bitmap(file_browser_xpm);
         return bitmap;
@@ -436,7 +436,7 @@ wxBitmap Structuredetection::GetBitmapResource( const wxString& name )
         wxBitmap bitmap(derived_add_xpm);
         return bitmap;
     }
-    else if (name == wxT("../../../paraver/git/wxparaver/icons/derived_substract.xpm"))
+    else if (name == wxT("../../imgs/derived_substract.xpm"))
     {
         wxBitmap bitmap(derived_substract_xpm);
         return bitmap;
@@ -451,12 +451,12 @@ wxBitmap Structuredetection::GetBitmapResource( const wxString& name )
         wxBitmap bitmap(timeline_xpm);
         return bitmap;
     }
-    else if (name == wxT("../../../paraver/git/wxparaver/icons/new_window.xpm"))
+    else if (name == wxT("new_window.xpm"))
     {
         wxBitmap bitmap(application_star_xpm);
         return bitmap;
     }
-    else if (name == wxT("../../../paraver/git/wxparaver/icons/delete.xpm"))
+    else if (name == wxT("../../imgs/delete.xpm"))
     {
         wxBitmap bitmap(delete_xpm);
         return bitmap;

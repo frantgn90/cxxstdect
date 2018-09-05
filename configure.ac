@@ -13,7 +13,6 @@ LT_INIT
 
 AC_CONFIG_FILES([
                  Makefile
-                 src/Makefile
                  src/trace-utils/Makefile
                  src/1-parse/Makefile
                  src/2-reduce/Makefile
@@ -40,7 +39,7 @@ AX_BOOST_PROGRAM_OPTIONS
 dnl AX_BOOST_SPLIT
 AX_CHECK_ZLIB
 WX_CONFIG_OPTIONS
-WX_CONFIG_CHECK([3.0.0])
+WX_CONFIG_CHECK([3.1.1])
 AX_PROG_WITH_WXPROPGRID_DIR
 AX_PROG_WXPROPGRID_NAME
 

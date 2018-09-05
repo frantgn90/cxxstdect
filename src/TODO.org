@@ -7,6 +7,8 @@
     appears. Think about where to free them.
   - [ ] Hidden superloops can not be freed by Loop destructor because SIGSEGV
     appears. Think about where to free them.
+  - [ ] Bad behavior when trace duration is about 2^32. It should be because
+    some casting to integer.
 * TODO Paraver interoperability
   - [ ] Even w/o compressing times, the iterations boundaries are degrading
     as bigger the iteration index is.
@@ -33,3 +35,4 @@
     correctly on gnuplot
 * TODO GUI
   - [X] Legend is only shown when a resize of the windows is done.
+  - [ ] Process does not end when close the interface.

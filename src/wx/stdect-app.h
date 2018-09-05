@@ -96,7 +96,8 @@ static const wxCmdLineEntryDesc g_cmdLineDesc [] =
         wxCMD_LINE_OPTION, 
         "b", 
         "bottom-bound", 
-        "disables the GUI",
+        "Bottom boundary. All mpi calls that represents a fraction bellow"\
+            " this value will be dismissed.",
         wxCMD_LINE_VAL_DOUBLE,
         wxCMD_LINE_PARAM_OPTIONAL
     },
